@@ -2,11 +2,28 @@
 
 - PCL(依赖VTK)：`sudo apt install ros-melodic-pcl-ros  `
 
-- Eigen3: 
+- Eigen3: 忘了，没有通过
 
 - OpenMP：（安装GCC即可）
 
 - g2o：图优化,`sudo apt install ros-melodic-libg2o`
+
+- ndt_omp :在src中，`git clone https://github.com/koide3/ndt_omp.git`
+
+- GTSAM:不能在src中使用`catkin_make`，联合编译，使用源码安装方法，版本选择为`4.0.3`
+
+  ```bash
+   git clone -b 4.0.3 https://github.com/borglab/gtsam.git
+  ```
+
+  ```
+  cd gtsam
+  mkdir build && cd build
+  cmake ..
+  cmake --build .
+  sudo make install
+  ```
+
 
 ## 安装VTK(忽略)
 
@@ -100,7 +117,7 @@ cd build
 cmake ..
 ```
 
-## 错误1
+## 错误1：没有安装ndt_omp
 
 ```
 -- Could not find the required component 'ndt_omp'. The following CMake error indicates that you either need to install the package with the same name or change your environment so that it can be found.
@@ -154,7 +171,7 @@ https://www.cnblogs.com/chenlinchong/p/11763481.html
 
    这时出现错误2
 
-## 错误2
+## 错误2:没有安装fast_gicp
 
 ```
 -- Could NOT find fast_gicp (missing: fast_gicp_DIR)
@@ -180,7 +197,7 @@ github上搜索fast_gicp,然后git clone 到src目录中
 git clone https://github.com/SMRT-AIST/fast_gicp.git
 ```
 
-## 错误3：
+## 错误3：没有安装GTSAM
 
 ```
 CMake Error at 4DRadarSLAM/CMakeLists.txt:56 (find_package):
@@ -253,7 +270,7 @@ cmake编译时指定编译器版本，此条未实验。
 
 这时catkin_make,不再提示没有包，但出现新错误
 
-## 错误4
+## 错误4：没有安装fast_apdgicp.hpp
 
 ```
 fatal error: fast_gicp/gicp/fast_apdgicp.hpp: 没有那个文件或目录
@@ -273,7 +290,7 @@ https://github.com/zhuge2333/fast_apdgicp
 
 继续catkin_make，出现
 
-## 错误5
+## 错误5：没有barometer包
 
 ```
 catkin_ws/src/4DRadarSLAM/apps/radar_graph_slam_nodelet.cpp:71:10: fatal error: barometer_bmp388/Barometer.h: No such file or directory
@@ -294,6 +311,47 @@ catkin_ws/src/4DRadarSLAM/apps/radar_graph_slam_nodelet.cpp:71:10: fatal error: 
 git clone https://github.com/zhuge2333/barometer_bmp388.git
 ```
 
+## 错误6：'std'没有'make_unique'成员
+
+```
+error: ‘make_unique’ is not a member of ‘std’
+```
+
+##### 原因分析：
+
+是因为 **std**::**make _ unique**在C++14以后新加入的函数；
+
+##### 解决方法：
+
+修改`catkin_workspace\src\4DRadarSlam\CMakeLists.txt`
+
+在开头添加
+
+```cmake
+set(CMAKE_CXX_STANDARD 14)  # 使用 C++14 标准
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+## 错误7：'std'没有'mutex'成员
+
+```bash
+/home/dearmoon/projects/4DRadarSlam/src/4DRadarSLAM/include/radar_graph_slam/loop_detector.hpp:98:8: error: ‘mutex’ in namespace ‘std’ does not name a type
+```
+
+##### 原因分析：
+
+没有添加头文件\<mutex>
+
+##### 解决方法：
+
+在提示错误的文件中添加头文件
+
+```
+#include <mutex>  
+```
+
+
+
 ## 至此，catkin_make成功
 
 # 三、运行
@@ -302,7 +360,7 @@ git clone https://github.com/zhuge2333/barometer_bmp388.git
 
 修改rosbag_play_radar_carpark1.launch文件中的路径
 
-
+### 
 
 在工作空间根目录下运行
 
