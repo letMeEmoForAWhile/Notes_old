@@ -10,7 +10,7 @@
 
 - ndt_omp :在src中，`git clone https://github.com/koide3/ndt_omp.git`
 
-- GTSAM:不能在src中使用`catkin_make`，联合编译，使用源码安装方法，版本选择为`4.0.3`
+- GTSAM:不能在src中使用`catkin_make`联合编译，使用源码安装方法，版本选择为`4.0.3`
 
   ```bash
    git clone -b 4.0.3 https://github.com/borglab/gtsam.git
