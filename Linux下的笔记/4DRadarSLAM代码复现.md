@@ -2,7 +2,7 @@
 
 - PCL(依赖VTK)：`sudo apt install ros-melodic-pcl-ros  `
 
-- Eigen3: 忘了，没有使用源码安装，可能使用了apt
+- Eigen3: 忘了，没有使用源码安装，可能使用apt安装： `sudo apt install build-essential cmake git libeigen3-dev`
 
 - OpenMP：（安装GCC即可）
 
