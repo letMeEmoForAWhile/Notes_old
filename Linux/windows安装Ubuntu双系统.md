@@ -38,16 +38,62 @@ ubuntu20.04：
 
 # 遇到的问题
 
-##### 1、没有无线驱动
+## 1、没有无线驱动
 
 - [双系统装完之后，Ubuntu系统连不上WIFI的问题 - 代码先锋网 (codeleading.com)](https://codeleading.com/article/42485056591/)
 - [ubuntu18.04安装后没有wifi - CSDN文库](https://wenku.csdn.net/answer/b74e7077e0d19b293da066a3e293277e)
 
-成功解决的链接：
+适用于ubuntu20.04和ubuntu22.04
 
 [Ubuntu20.04 无线网卡驱动（未发现wifi适配器）、Nvidia显卡驱动安装一条龙教程【多坑预警】_ubuntuwifi驱动安装-CSDN博客](https://blog.csdn.net/weixin_52490336/article/details/133139105)
 
 - 首先明确网卡是intel还是realtek，在windows中查看设备管理器可知本机网卡为 intel AX211
+
+适用于ubuntu18.04
+
+https://blog.csdn.net/m0_74397934/article/details/134809876
+
+- 更新linux内核
+- 下载驱动
+
+## 2、扩展显示屏无法使用
+
+折腾了很久，最终无法实现扩展屏和内置屏同时使用。
+
+## 3、触摸板失效
+
+![image-20231216192315752](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20231216192315752.png)
+
+触摸板无法使用，设置中无触摸板模块。
+
+1、检查是否存在可用的触摸板驱动程序
+
+```bash
+sudo apt update
+sudo apt install xserver-xorg-input-synaptics
+```
+
+出现问题：
+
+```
+下列软件包有未满足的依赖关系：
+ xserver-xorg-input-synaptics : 依赖: xserver-xorg-core (>= 2:1.18.99.901)
+E: 无法修正错误，因为您要求某些软件包保持现状，就是它们破坏了软件包间的依赖关系。
+```
+
+先更新xserver-xorg-core
+
+```
+sudo apt-get install xserver-xorg-core
+```
+
+重新安装驱动
+
+```
+sudo apt install xserver-xorg-input-synaptics
+```
+
+失败，且出现登陆成功后无法使用鼠标和键盘的问题。
 
 # 删除Ubuntu系统
 
