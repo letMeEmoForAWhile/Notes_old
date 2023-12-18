@@ -471,7 +471,7 @@ radarpoint_xyzi包含了xyz和强度信息，
 
 ## C、文件
 
-### apps/preprocessing_nodelet.cpp
+### 1、apps/preprocessing_nodelet.cpp
 
 ##### 参数初始化
 
@@ -533,7 +533,11 @@ radarpoint_xyzi包含了xyz和强度信息，
   - 话题：/eagle_data/pc2_raw
   - 消息类型：sensor_msgs::PointCloud2
 
-### apps/radar_graph_slam_nodelet.cpp
+### 2、apps/radar_graph_slam_nodelet.cpp
+
+定义了一个类:RadarGraphSlamNodelet
+
+
 
 ##### 创建slam需要用到的对象:
 
@@ -582,7 +586,7 @@ radarpoint_xyzi包含了xyz和强度信息，
   - 话题：/radar_graph_slam/odom_frame2frame
   - 消息类型：nav_msgs::Odometry
 
-### apps/scan_matching_odometry_nodelet.cpp
+### 3、apps/scan_matching_odometry_nodelet.cpp
 
 ##### 订阅者：
 
