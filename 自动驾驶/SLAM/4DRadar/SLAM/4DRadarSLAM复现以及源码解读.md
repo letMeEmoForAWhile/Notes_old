@@ -469,6 +469,13 @@ radarpoint_xyzi包含了xyz和强度信息，
 
    当机器人的一个部分相对于另一个部分移动时(例如，一个机器人的手臂相对于它的身体)，tf会自动跟踪这些变化，并为应用程序提供实时的、准确的坐标转换。
 
+##### 2、里程计信息
+
+包含机器人运动的测量，包括平移和旋转信息。
+
+- **平移信息(Translation)**：机器人相对于起始点在x、y和z轴上的平移量。
+- **旋转信息(Rotation)**：机器人相对于起始点的旋转角度。可以用欧拉角或四元数来表示。
+
 ## C、文件
 
 ### 1、apps/preprocessing_nodelet.cpp
@@ -536,6 +543,33 @@ radarpoint_xyzi包含了xyz和强度信息，
 ### 2、apps/radar_graph_slam_nodelet.cpp
 
 定义了一个类:RadarGraphSlamNodelet
+
+#### 成员函数：
+
+##### 1、onInit()
+
+##### 2、cloud_callback()
+
+- 描述：将接收到的点云扔到关键帧序列中
+
+- 参数：odom_msg
+- 参数：cloud_msg
+
+计算
+
+##### 3、imu_callback()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
