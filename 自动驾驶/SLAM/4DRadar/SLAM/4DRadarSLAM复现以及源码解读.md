@@ -492,69 +492,115 @@ radarpoint_xyzi包含了xyz和强度信息，
 
 ROS中，机器人相关的坐标系通常由TF(Transform)库进行管理。便与机器人系统的各个部件(例如激光雷达、相机、底盘等)之间的坐标变换。
 
+##### 4、nav_msgs
+
+ROS的一个库
+
+包含了一系列与**导航**和**路径规划**相关的消息类型，用于在ROS系统中传递与机器人导航和路径规划相关的信息。
+
+常见的消息类型如下：
+
+- `Odometry`：包含机器人的里程计信息，如位置、方向和速度。
+- `Path`：表示机器人的轨迹或路径，通常由一系列的位姿(位置和方向)组成
+- `MapMetaData`：包含地图的元数据信息，如地图的分辨率、大小、原点等
+- `GetMap`和`GetPlan`：用于请求地图和路径规划服务的请求消息
+
+##### 5、geometry_msgs
+
+ROS的一个库
+
+包含了一系列与**几何**和**运动学**相关的消息类型，用于在ROS系统中传递与机器人姿态、位置、变换等信息。
+
+常见的消息类型图下：
+
+- `Point`：表示三位空间中的一个点，具有x、y、z坐标
+- `Quaternion`：表示四元数，通常用于表示旋转姿态
+- `Pose`和`PoseStamped`：分别表示三位空间中的姿态(位置和旋转)和带时间戳的姿态
+- `Twist`和`TwistStamped`：表示线速度和角速度，以及带时间戳的线速度和角速度
+- `Transform`和`TransformStamped`：
+
+
+
 ## C、文件
 
 ### 1、apps/preprocessing_nodelet.cpp
 
-##### 参数初始化
+##### 参数初始化: virtual void onInit()
 
 - 从`ground truth`文件中读取每一行，作为`odom_msgs`队列的元素，每个odom消息包含位置和方向数据
 
+- ##### 三个订阅者：
+
+  - imu_sub
+    - 话题：`imuTopic`，即/vectornav/imu
+    - 消息类型：
+    - 回调函数：&PreprocessingNodelet::imu_callback
+      - 从输入的imu_msg获取信息并调整，得到imu_data并发布
+      - 同时，判断odom消息是否需要更新，若需要，更新后重新发布
+
+  - points_sub：
+    - 话题：`pointCloudTopic`，从config/params.yaml中可知，pointCloudTopic即/radar_enhanced_pcl
+    - 回调函数：&PreprocessingNodelet::cloud_callback
+      - 输入： `sensor::PointCloud::ConstPtr& eagle_msg`
+      - `radarpoint_raw`
+      - `radarpoint_xyzi`
+      - `radarcloud_raw`
+      - `radarcloud_xyzi`
+      - 两个opencv对象，用于存储原始点和转换后的点：`ptMat`，`dstMat`
+      - `dstMat`：原始点云与转换矩阵`Radar_to_livox`相乘。
+
+  - command_sub
+    - 话题：/conmand
+    - 回调函数：&PrecessingNodelet::command_callback
 
 
-##### 三个订阅者：
+- 
+  ##### 八个发布者：
 
-- imu_sub
-  - 话题：`imuTopic`，即/vectornav/imu
-  - 消息类型：
-  - 回调函数：&PreprocessingNodelet::imu_callback
-    - 从输入的imu_msg获取信息并调整，得到imu_data并发布
-    - 同时，判断odom消息是否需要更新，若需要，更新后重新发布
-- points_sub：
-  - 话题：`pointCloudTopic`，从config/params.yaml中可知，pointCloudTopic即/radar_enhanced_pcl
-  - 回调函数：&PreprocessingNodelet::cloud_callback
-    - 输入： `sensor::PointCloud::ConstPtr& eagle_msg`
-    - `radarpoint_raw`
-    - `radarpoint_xyzi`
-    - `radarcloud_raw`
-    - `radarcloud_xyzi`
-    - 两个opencv对象，用于存储原始点和转换后的点：`ptMat`，`dstMat`
-    - `dstMat`：原始点云与转换矩阵`Radar_to_livox`相乘。
-- command_sub
-  - 话题：/conmand
-  - 回调函数：&PrecessingNodelet::command_callback
+  - points_pub
+    - 话题：/flitered_points
+
+    - 消息类型：sensor_msgs::PointCloud2
 
 
-##### 八个发布者：
-
-- points_pub
-  - 话题：/flitered_points
-
-  - 消息类型：sensor_msgs::PointCloud2
-
-- colored_pub
-  - 话题：/colored_points
-  - 消息类型：sensor_msgs::PointCloud2
+  - colored_pub
+    - 话题：/colored_points
+    - 消息类型：sensor_msgs::PointCloud2
 
 
-- imu_pub
-  - 话题：/imu
-  - 消息类型：sensor_msgs::Imu
-- gt_pub
-  - 话题：/aftmapped_to_init
-  - 消息类型：nav_msgs::Odometry
-- ==pub_twist==
-  - 话题：topic_twist,即/eagle_data/twist
-  - 消息类型：gemetry_msgs::TwistWithConvarianceStamped
-- ==pub_inlier_pc2==
-  - 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
-  - 消息类型：sensor_msgs::PointCloud2
-- ==pub_outlier==
-  - 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
-  - 消息类型：sensor_msgs::PointCloud2
-- ==pc2_raw_pub==
-  - 话题：/eagle_data/pc2_raw
-  - 消息类型：sensor_msgs::PointCloud2
+  - imu_pub
+    - 话题：/imu
+    - 消息类型：sensor_msgs::Imu
+
+
+  - gt_pub
+    - 话题：/aftmapped_to_init
+    - 消息类型：nav_msgs::Odometry
+
+
+  - ==pub_twist==
+    - 话题：topic_twist,即/eagle_data/twist
+    - 消息类型：gemetry_msgs::TwistWithConvarianceStamped
+
+
+  - ==pub_inlier_pc2==
+    - 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
+    - 消息类型：sensor_msgs::PointCloud2
+
+
+  - ==pub_outlier==
+    - 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
+    - 消息类型：sensor_msgs::PointCloud2
+
+
+  - ==pc2_raw_pub==
+    - 话题：/eagle_data/pc2_raw
+    - 消息类型：sensor_msgs::PointCloud2
+
+
+##### 点云回调函数：cloud_callback()
+
+
 
 ### 2、apps/radar_graph_slam_nodelet.cpp
 
