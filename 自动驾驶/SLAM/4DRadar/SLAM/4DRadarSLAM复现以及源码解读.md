@@ -443,6 +443,16 @@ radarpoint_xyzi包含了xyz和强度信息，
 
 ##### 4、odom_msgs的数据格式是什么，为什么要使用队列
 
+##### 5、初始位姿矩阵的作用是什么
+
+初始位姿矩阵是描述机器人相对于全局世界坐标系的初始位置和方向的矩阵。
+
+1. 初始化：用于初始化机器人在全局坐标系中的初始位置和方向。
+2. 坐标系转换：通过初始位姿矩阵，可以将传感器数据从机器人本体坐标系转换到全局坐标系中，或者反之。
+3. 运动模型初始化：可以用于初始化机器人的运动状态。
+4. 路径规划和导航：机器人需要知道自己的初始位置，以便规划路径。
+5. 系统状态估计：用作状态估计的起点。
+
 ## B、概念
 
 ##### 1、tf变化
@@ -519,88 +529,82 @@ ROS的一个库
 - `Twist`和`TwistStamped`：表示线速度和角速度，以及带时间戳的线速度和角速度
 - `Transform`和`TransformStamped`：
 
+##### 6、初始位姿矩阵
 
+用于初始化机器人在全局坐标系中的初始位置和方向。
 
 ## C、文件
 
 ### 1、apps/preprocessing_nodelet.cpp
 
-##### 参数初始化: virtual void onInit()
+从`ground truth`文件中读取每一行，作为`odom_msgs`队列的元素，每个odom消息包含位置和方向数据
 
-- 从`ground truth`文件中读取每一行，作为`odom_msgs`队列的元素，每个odom消息包含位置和方向数据
+##### 三个订阅者：
 
-- ##### 三个订阅者：
+- imu_sub
+  - 话题：`imuTopic`，即/vectornav/imu
+  - 消息类型：
+  - 回调函数：&PreprocessingNodelet::imu_callback
+    - 从输入的imu_msg获取信息并调整，得到imu_data并发布
+    - 同时，判断odom消息是否需要更新，若需要，更新后重新发布
 
-  - imu_sub
-    - 话题：`imuTopic`，即/vectornav/imu
-    - 消息类型：
-    - 回调函数：&PreprocessingNodelet::imu_callback
-      - 从输入的imu_msg获取信息并调整，得到imu_data并发布
-      - 同时，判断odom消息是否需要更新，若需要，更新后重新发布
+- points_sub：
+  - 话题：`pointCloudTopic`，从config/params.yaml中可知，pointCloudTopic即/radar_enhanced_pcl
+  - 回调函数：&PreprocessingNodelet::cloud_callback
+    - 输入： `sensor::PointCloud::ConstPtr& eagle_msg`
+    - `radarpoint_raw`
+    - `radarpoint_xyzi`
+    - `radarcloud_raw`
+    - `radarcloud_xyzi`
+    - 两个opencv对象，用于存储原始点和转换后的点：`ptMat`，`dstMat`
+    - `dstMat`：原始点云与转换矩阵`Radar_to_livox`相乘。
 
-  - points_sub：
-    - 话题：`pointCloudTopic`，从config/params.yaml中可知，pointCloudTopic即/radar_enhanced_pcl
-    - 回调函数：&PreprocessingNodelet::cloud_callback
-      - 输入： `sensor::PointCloud::ConstPtr& eagle_msg`
-      - `radarpoint_raw`
-      - `radarpoint_xyzi`
-      - `radarcloud_raw`
-      - `radarcloud_xyzi`
-      - 两个opencv对象，用于存储原始点和转换后的点：`ptMat`，`dstMat`
-      - `dstMat`：原始点云与转换矩阵`Radar_to_livox`相乘。
-
-  - command_sub
-    - 话题：/conmand
-    - 回调函数：&PrecessingNodelet::command_callback
+- command_sub
+  - 话题：/conmand
+  - 回调函数：&PrecessingNodelet::command_callback
 
 
-- 
-  ##### 八个发布者：
+##### 八个发布者：
 
-  - points_pub
-    - 话题：/flitered_points
+- points_pub
+  - 话题：/flitered_points
 
-    - 消息类型：sensor_msgs::PointCloud2
-
-
-  - colored_pub
-    - 话题：/colored_points
-    - 消息类型：sensor_msgs::PointCloud2
+  - 消息类型：sensor_msgs::PointCloud2
 
 
-  - imu_pub
-    - 话题：/imu
-    - 消息类型：sensor_msgs::Imu
+- colored_pub
+  - 话题：/colored_points
+  - 消息类型：sensor_msgs::PointCloud2
 
 
-  - gt_pub
-    - 话题：/aftmapped_to_init
-    - 消息类型：nav_msgs::Odometry
+- imu_pub
+  - 话题：/imu
+  - 消息类型：sensor_msgs::Imu
 
 
-  - ==pub_twist==
-    - 话题：topic_twist,即/eagle_data/twist
-    - 消息类型：gemetry_msgs::TwistWithConvarianceStamped
+- gt_pub
+  - 话题：/aftmapped_to_init
+  - 消息类型：nav_msgs::Odometry
 
 
-  - ==pub_inlier_pc2==
-    - 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
-    - 消息类型：sensor_msgs::PointCloud2
+- ==pub_twist==
+  - 话题：topic_twist,即/eagle_data/twist
+  - 消息类型：gemetry_msgs::TwistWithConvarianceStamped
 
 
-  - ==pub_outlier==
-    - 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
-    - 消息类型：sensor_msgs::PointCloud2
+- ==pub_inlier_pc2==
+  - 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
+  - 消息类型：sensor_msgs::PointCloud2
 
 
-  - ==pc2_raw_pub==
-    - 话题：/eagle_data/pc2_raw
-    - 消息类型：sensor_msgs::PointCloud2
+- ==pub_outlier==
+  - 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
+  - 消息类型：sensor_msgs::PointCloud2
 
 
-##### 点云回调函数：cloud_callback()
-
-
+- ==pc2_raw_pub==
+  - 话题：/eagle_data/pc2_raw
+  - 消息类型：sensor_msgs::PointCloud2
 
 ### 2、apps/radar_graph_slam_nodelet.cpp
 
@@ -608,32 +612,42 @@ ROS的一个库
 
 #### 成员函数：
 
-##### 1、onInit()
+##### 1、参数初始化: virtual void onInit()
 
-##### 2、cloud_callback()
+- 描述：初始化参数
 
-- 描述：将接收到的点云扔到关键帧序列中
+##### 2、点云回调函数：cloud_callback()
 
-- 参数：odom_msg
-- 参数：cloud_msg
-
-计算
+- 描述：将接受到的点云扔到关键帧队列中
+- 参数：
+  - `odom_msg`：里程计信息，即当前帧到基座之间的旋转、平移信息
+  - `cloud_msg`：点云信息，即当前帧各个点的x、y、z坐标和强度等
+- 相关变量：
+  - 构造的关键帧：`KeyFrame::Ptr keyframe(new KeyFrame(keyframe_index, stamp, odom_now, accum_d, cloud));`
+    - 包含关键帧索引、时间戳、当前的里程计信息、累计的距离、点云
 
 ##### 3、imu_callback()
 
+- 描述：根据IMU数据的四元数部分计算初始的机器人初始位姿矩阵`initial_pose`
 
+- 参数：
 
+  - `imu_odom_msg`:接受到的imu数据消息，包含机器人在某个时间点的惯性测量单元数据，如加速度、角速度等信息。
 
+    `sensor_msgs::Imu`常见的成员：
 
+    - `Header`：时间戳`stamp`
+    - `linear_acceleration`：包含机器人在三个坐标轴上的线性加速度
+    - `angular_velocity`：包含机器人在三个坐标轴上的角速度
+    - `orientation`（可能有）：包含机器人的方向信息，通常表示为四元数x、y、z、w
 
+    在这个`imu_callback()`中主要处理`imu_odom_msg->orientation`部分
 
+- 相关变量：
 
+  - `initial_pose`：初始位姿矩阵，有imu中的四元数经过一系列转换得到。
 
-
-
-
-
-
+————————————————————————————————————————————————————————————
 
 ##### 创建slam需要用到的对象:
 
