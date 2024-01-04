@@ -10,19 +10,31 @@ Implicit Neural Representation ，是一种利用神经网络学习场景或对�
 
 - 相对于显示表示，隐式表示并不直接输出场景或对象的具体几何形状或颜色信息，而是通过学习一个隐含函数来生成所需的输出。
 
-例子：
+显示表示举例：能直接看到三维模型
+
+- point cloud
+- [Mesh](https://blog.csdn.net/Zsh00058555/article/details/114644574)
+- voxel
+
+隐式神经表示举例：
 
 - 典型的例子是NeRF(可见反射表面无关表征)，其中神经网络学习了一个函数，该函数接受三维空间坐标作为输入，并输出对应点的颜色和密度信息。
-- 这些隐式函数通常是深度神经网络，如多层感知器（MLP）或卷积神经网络（CNN）
+- 这些隐式函数通常是深度神经网络，如多层感知器（MLP）或卷积神经网络（CNN）。
 
 ##### 2、NeRF
+
+[NeRF：用深度学习完成3D渲染任务的蹿红 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/390848839)
 
 一种用于三维场景重建的计算机图形学技术。
 
 工作原理
 
-- 训练一个神经网络，该网络接受从不同视角观察的图像作为输入，然后输出场景中每个点的颜色和密度。
+- 训练一个神经网络(多层MLP)，该网络接受从不同视角观察的图像作为输入，然后输出场景中每个点的颜色和密度。
+  - 将三维场景用MLP表示，前向的网络计算就和人眼或者相机观察三维场景的过程一致，当整个计算过程都可微的时候，通过**渲染图片**的监督，便可以对MLP进行优化，“学”出三维场景的“隐式”参数。
+
 - 这些输出随后可以用于生成新的图像，从而使得神经网络能够生成逼真的三维场景。
+
+![img](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/v2-8540750b44b1da49ccd1fe38915324a0_720w.webp)
 
 ##### 3、全局一致性
 
@@ -40,9 +52,42 @@ Implicit Neural Representation ，是一种利用神经网络学习场景或对�
 
 具体来说，在三维重建中，占用场景通常用占用格子(occupancy grid)或体素(voxel)表示。如果某个格子或体素被占用，表示该位置存在物体
 
+##### 5、Uncertainty
+
+为了识别占用率没有被良好训练的像素。
+
+NeRF（可见反射表面无关表征）是一种用于从二维图像重建三维场景的技术，它使用神经网络来学习场景中每个点的颜色和密度。然而，由于训练数据的有限性和噪声，NeRF可能无法完全捕捉场景的所有细节，导致在渲染新视角时出现不确定性或模糊。
+
+NeRF中的不确定性（uncertainty）是指NeRF对场景的表示的可信度或可靠性的度量。不确定性可以分为两种类型：
+
+- **模型不确定性（model uncertainty）**：这是指由于神经网络的结构或参数的不确定性导致的不确定性。模型不确定性反映了NeRF对场景的理解程度，以及它能否泛化到新的视角。模型不确定性可以通过使用集成方法（ensemble）或贝叶斯神经网络（Bayesian neural network）等技术来估计或降低。
+- **数据不确定性（data uncertainty）**：这是指由于训练数据的噪声或不完整性导致的不确定性。数据不确定性反映了NeRF对场景的观察程度，以及它能否重建未观察到的区域。数据不确定性可以通过使用不确定性估计（uncertainty estimation）或主动学习（active learning）等技术来估计或降低。
+
+[NeRF中的不确定性的量化和降低对于提高NeRF的性能和可解释性非常重要。一些最新的研究工作](https://arxiv.org/abs/2209.08546)[1](https://arxiv.org/abs/2209.08546)[2](https://arxiv.org/abs/2209.08718)[3](https://arxiv.org/abs/2109.02123)[已经探索了在NeRF中引入和利用不确定性的方法，取得了一些进展。](https://arxiv.org/abs/2209.08546)[1](https://arxiv.org/abs/2209.08546)[2](https://arxiv.org/abs/2209.08718)[3](https://arxiv.org/abs/2109.02123)分别是以下三篇论文的编号：
+
+- [ActiveNeRF: Learning where to See with Uncertainty Estimation](https://arxiv.org/abs/2209.08546)[1](https://arxiv.org/abs/2209.08546)
+- [Density-aware NeRF Ensembles: Quantifying Predictive Uncertainty in Neural Radiance Fields](https://arxiv.org/abs/2209.08546)[2](https://arxiv.org/abs/2209.08718)
+- [Stochastic Neural Radiance Fields: Quantifying Uncertainty in Neural Radiance Fields](https://arxiv.org/abs/2209.08546)[3](https://arxiv.org/abs/2109.02123)
+
 ## 问题
 
 ##### 1、动态局部建图进程中，建图模块是怎么用关键帧训练局部地图的
+
+##### 2、NeRF在SLAM中具体是怎么作用的，输入和输出分别是什么
+
+输入：
+
+- 场景的连续图像。
+
+输出：
+
+- 场景的隐式表示。
+
+举例：
+
+- iMAP使用单目相机获取场景的连续图像，并使用视觉里程计技术估计相邻场景之间的相对位姿。
+- 然后，将相邻图像的位姿估计结果作为NeRF的输入，生成相邻图像之间的3D场景。
+- 最后，使用优化算法对相邻图像之间的位姿进行优化，从而实现对场景的实时重建和定位。
 
 # 一、背景
 
@@ -227,9 +272,7 @@ $$
   \mathcal{L}_p = \frac{1}{M} \sum^M _{i=1} |\hat{C}-C_{gt}|_2
   $$
 
-- 
-
-- 几何损失是渲染深度和地面真值深度之间的损失
+- 几何损失是渲染深度和地面真值深度之间的简单$\mathcal{L}_1$损失
   $$
   \mathcal{L}_g = \frac{1}{M} \sum^M _{i=1}|\hat{D}- D_{gt}|
   $$
@@ -260,7 +303,42 @@ $$
 - 消融实验
   - NICE-SLAM提供的公寓数据集
 
+基准：三个开源的RGB-D隐式神经网络SLAM
 
+- iMAP
+- NICE-SLAM
+- ESLAM
 
+TUM数据集上的评估
 
+![image-20240104100614956](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240104100614956.png)
 
+大规模场景ScanNet
+
+- 定量实验
+
+![image-20240104100728896](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240104100728896.png)
+
+- 定性实验
+
+  ![image-20240104100849342](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240104100849342.png)
+
+- 提取的网格如下：
+
+![image-20240104101308073](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240104101308073.png)
+
+运行时间和存储
+
+![image-20240104101549337](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240104101549337.png)
+
+建图速度更快，建图所需的帧更少(只用关键帧)
+
+# 五、iMAP
+
+步骤
+
+- iMAP使用单目相机获取场景的连续图像，并使用视觉里程计技术估计相邻图像之间的相对位姿。
+
+- 然后，将相邻图像的位姿估计结果作为NeRF的输入，生成相邻图像之间的3D场景。
+
+- 最后，使用优化算法对相邻图像之间的位姿进行优化，从而实现对场景的实时重建和定位。iMAP中的优化算法是基于非线性最小二乘法的优化算法。
