@@ -443,6 +443,8 @@ radarpoint_xyzi包含了xyz和强度信息，
 
 ##### 4、odom_msgs的数据格式是什么，为什么要使用队列
 
+odom_msgs包含了机器人的位置、姿态、线速度、角速度等信息。
+
 ##### 5、初始位姿矩阵的作用是什么
 
 初始位姿矩阵是描述机器人相对于全局世界坐标系的初始位置和方向的矩阵。
@@ -452,6 +454,30 @@ radarpoint_xyzi包含了xyz和强度信息，
 3. 运动模型初始化：可以用于初始化机器人的运动状态。
 4. 路径规划和导航：机器人需要知道自己的初始位置，以便规划路径。
 5. 系统状态估计：用作状态估计的起点。
+
+##### 6、降采样和去除离群点的作用分别是什么
+
+降采样和去除离群点是点云处理中常用的两种操作，它们的作用分别如下：
+
+1. **降采样（Downsampling）**：
+   - **作用**：降采样是为了减少点云数据量，从而提高处理效率、降低计算成本，并在一定程度上保持原始点云的形状特征。通过减少点云中的点数，可以在不丢失重要信息的前提下，提高后续处理步骤的速度和效率。
+   - **方法**：降采样常用的方法之一是体素网格降采样（Voxel Grid Downsampling），将点云空间划分为立方体网格，每个网格内只保留一个点的信息。其他降采样方法还包括统计学降采样等。
+
+2. **去除离群点（Outlier Removal）**：
+   - **作用**：去除离群点是为了过滤掉可能由于传感器误差、环境干扰等原因引入的异常点，以提高点云的质量和准确性。离群点可能对后续的点云处理和分析步骤产生负面影响，因此去除这些离群点是一个预处理的重要步骤。
+   - **方法**：常见的去除离群点的方法包括统计学方法（如统计学离群点移除），半径滤波方法（以每个点为中心，计算周围点的密度，去除密度较低的点），以及基于机器学习的方法等。
+
+这两个操作通常在点云预处理阶段应用，以提高点云的质量和适应性，使得后续的点云处理、配准、建图等任务更加稳定和可靠。
+
+##### 7、header.frame_id 和 child_frame_id的区别
+
+[ros常用组件_什么是child frame id-CSDN博客](https://blog.csdn.net/weixin_62349967/article/details/126667793)
+
+两者均是ROS消息的头部(`Header`)中的两个重要的标识符
+
+1. `header.frame_id`：表示消息所在的坐标系的名称。例如，激光雷达数据的`frame_id`可能是`laser_frame`（以激光雷达为原点的坐标系），相机的`frame_id`可能是`camera_frame`(以相机为原点的坐标系)。
+2. `child_frame_id`：表示一个相对于`frame_id`的子坐标系。通常它用于表示机器人的移动部件或传感器相对运动坐标系。例如，激光雷达数据的`child_frame_id`可能是`base_laser`，表示机器人底盘坐标系。
+3. `translation`表示`child_frame_id`相对于`header.frame_id`的偏移量，而`rotation`表示`child_fram_id`相对于`header.frame_id`的偏航、俯仰、翻滚和w(四元数)
 
 ## B、概念
 
@@ -627,26 +653,56 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 - gt_pub
   - 话题：/aftmapped_to_init
   - 消息类型：nav_msgs::Odometry
+  - 描述：Aft-mapped到初始位姿的里程计数据
 
 
-- ==pub_twist==
+- pub_twist
   - 话题：topic_twist,即/eagle_data/twist
   - 消息类型：gemetry_msgs::TwistWithConvarianceStamped
+  - 描述：Twist通常是指机器人的运动变化，包括线速度和角速度
 
 
-- ==pub_inlier_pc2==
+- pub_inlier_pc2
   - 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
   - 消息类型：sensor_msgs::PointCloud2
+  - 描述：在点云配准或特征提取中，内点是指与模型或特征匹配的点。内点点云可能是经过某种滤波或配准后，与某个模型或参考帧相关的点云。
 
 
-- ==pub_outlier==
+- pub_outlier
   - 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
   - 消息类型：sensor_msgs::PointCloud2
+  - 描述：与内点相反，外点是指不符合模型或特征的点。外点点云通常包含未能与给定模型或参考帧匹配的点。
 
 
-- ==pc2_raw_pub==
+- pc2_raw_pub
   - 话题：/eagle_data/pc2_raw
   - 消息类型：sensor_msgs::PointCloud2
+  - 描述：这是从传感器（如激光雷达或深度相机）获取的未经处理的点云数据。原始点云包含传感器采集到的所有点，可能包含噪声、离群点等。
+
+#### 成员函数
+
+##### 1、virtual void onInit()
+
+-  描述： 初始化参数，设置订阅者、发布者
+
+##### 2、void initializeTransformation()
+
+- 描述：初始化一些变换矩阵，主要涉及不同坐标系之间的转换
+- 相关变量：
+  - `livox_to_RGB`：Livox雷达坐标系到RGB坐标系的变换矩阵。
+  - `RGB_to_livox`：RGB坐标系到Livox雷达坐标系的逆变换矩阵，即 `livox_to_RGB` 的逆矩阵。
+  - `Thermal_to_RGB`：红外热像仪坐标系到RGB坐标系的变换矩阵。
+  - `Radar_to_Thermal`：雷达坐标系到红外热像仪坐标系的变换矩阵。
+  - `Change_Radarframe`：雷达坐标系到Livox雷达坐标系的变换矩阵，通过交换坐标轴实现。
+  - `Radar_to_livox`：将雷达坐标系转换到Livox雷达坐标系的组合变换矩阵，通过矩阵相乘得到。
+
+##### 3、void initializeParams()
+
+- 描述：从ROS参数服务器获取并初始化一些参数，这些参数主要涉及点云处理中的降采样、离群点去除等操作的参数设置。
+- 相关变量：
+  - `voxelgrid`：用于进行体素网格降采样
+  - `outlier_removal_filter`：离群点移除对象的指针
+  - `odom_msgs`：std::deque\<nav_msgs::Odometry\>,`Odometry`消息的队列，这里存储的是`ground truth`文件中的`odom`消息
 
 ### 2、apps/radar_graph_slam_nodelet.cpp
 
@@ -656,7 +712,7 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 ##### 1、参数初始化: virtual void onInit()
 
-- 描述：初始化参数
+- 描述：初始化参数，设置订阅者、发布者
 
 ##### 2、点云回调函数：cloud_callback()
 
