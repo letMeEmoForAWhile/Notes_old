@@ -479,6 +479,16 @@ odom_msgs包含了机器人的位置、姿态、线速度、角速度等信息�
 2. `child_frame_id`：表示一个相对于`frame_id`的子坐标系。通常它用于表示机器人的移动部件或传感器相对运动坐标系。例如，激光雷达数据的`child_frame_id`可能是`base_laser`，表示机器人底盘坐标系。
 3. `translation`表示`child_frame_id`相对于`header.frame_id`的偏移量，而`rotation`表示`child_fram_id`相对于`header.frame_id`的偏航、俯仰、翻滚和w(四元数)
 
+##### 8、内点数据和外点数据的意义和区别
+
+内点：与模型拟合较好的点，用于估计模型
+
+外点：与模型拟合较差的点，用于判断模型的鲁棒性
+
+举例：
+
+`estimator.estimate(pc2_raw_msg, v_r, sigma_v_r, inlier_radar_msg, outlier_radar_msg)`使用RANSAC算法对点云数据进行==线性模型估计==，得到点云数据的自我速度以及内点和外点数据。内点和外点数据可以帮助我们更好地理解点云数据，以便于更好地估计模型的准确性和鲁棒性。
+
 ## B、概念
 
 ##### 1、tf变化
@@ -603,91 +613,101 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 ## C、文件
 
-### 1、apps/preprocessing_nodelet.cpp
+### 一、apps/preprocessing_nodelet.cpp
 
 从`ground truth`文件中读取每一行，作为`odom_msgs`队列的元素，每个odom消息包含位置和方向数据
 
-##### 三个订阅者：
+#### 三个订阅者：
 
-- imu_sub
-  - 话题：`imuTopic`，即/vectornav/imu
-  - 消息类型：
-  - 回调函数：&PreprocessingNodelet::imu_callback
-    - 从输入的imu_msg获取信息并调整，得到imu_data并发布
-    - 同时，判断odom消息是否需要更新，若需要，更新后重新发布
+##### 1、imu_sub
 
-- points_sub：
-  - 话题：`pointCloudTopic`，从config/params.yaml中可知，pointCloudTopic即/radar_enhanced_pcl
-  - 回调函数：&PreprocessingNodelet::cloud_callback
-    - 输入： `sensor::PointCloud::ConstPtr& eagle_msg`
-    - `radarpoint_raw`
-    - `radarpoint_xyzi`
-    - `radarcloud_raw`
-    - `radarcloud_xyzi`
-    - 两个opencv对象，用于存储原始点和转换后的点：`ptMat`，`dstMat`
-    - `dstMat`：原始点云与转换矩阵`Radar_to_livox`相乘。
+- 话题：`imuTopic`，即/vectornav/imu
+- 消息类型：
+- 回调函数：&PreprocessingNodelet::imu_callback
+  - 从输入的imu_msg获取信息并调整，得到imu_data并发布
+  - 同时，判断odom消息是否需要更新，若需要，更新后重新发布
 
-- command_sub
-  - 话题：/conmand
-  - 回调函数：&PrecessingNodelet::command_callback
+##### 2、points_sub：
 
+- 话题：`pointCloudTopic`，从config/params.yaml中可知，pointCloudTopic即/radar_enhanced_pcl
+- 回调函数：&PreprocessingNodelet::cloud_callback
+  - 输入： `sensor::PointCloud::ConstPtr& eagle_msg`
+  - `radarpoint_raw`
+  - `radarpoint_xyzi`
+  - `radarcloud_raw`
+  - `radarcloud_xyzi`
+  - 两个opencv对象，用于存储原始点和转换后的点：`ptMat`，`dstMat`
+  - `dstMat`：原始点云与转换矩阵`Radar_to_livox`相乘。
 
-##### 八个发布者：
+##### 3、command_sub
 
-- points_pub
-  - 话题：/flitered_points
-
-  - 消息类型：sensor_msgs::PointCloud2
+- 话题：/conmand
+- 回调函数：&PrecessingNodelet::command_callback
 
 
-- colored_pub
-  - 话题：/colored_points
-  - 消息类型：sensor_msgs::PointCloud2
+#### 八个发布者：
 
+##### 1、points_pub
 
-- imu_pub
-  - 话题：/imu
-  - 消息类型：sensor_msgs::Imu
+- 话题：/flitered_points
 
+- 消息类型：sensor_msgs::PointCloud2
 
-- gt_pub
-  - 话题：/aftmapped_to_init
-  - 消息类型：nav_msgs::Odometry
-  - 描述：Aft-mapped到初始位姿的里程计数据
+##### 2、colored_pub
 
+- 话题：/colored_points
+- 消息类型：sensor_msgs::PointCloud2
 
-- pub_twist
-  - 话题：topic_twist,即/eagle_data/twist
-  - 消息类型：gemetry_msgs::TwistWithConvarianceStamped
-  - 描述：Twist通常是指机器人的运动变化，包括线速度和角速度
+##### 3、imu_pub
 
+- 话题：/imu
+- 消息类型：sensor_msgs::Imu
 
-- pub_inlier_pc2
-  - 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
-  - 消息类型：sensor_msgs::PointCloud2
-  - 描述：在点云配准或特征提取中，内点是指与模型或特征匹配的点。内点点云可能是经过某种滤波或配准后，与某个模型或参考帧相关的点云。
+##### 4、gt_pub
 
+- 话题：/aftmapped_to_init
+- 消息类型：nav_msgs::Odometry
+- 描述：Aft-mapped到初始位姿的里程计数据
 
-- pub_outlier
-  - 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
-  - 消息类型：sensor_msgs::PointCloud2
-  - 描述：与内点相反，外点是指不符合模型或特征的点。外点点云通常包含未能与给定模型或参考帧匹配的点。
+##### 5、pub_twist
 
+- 话题：topic_twist,即/eagle_data/twist
+- 消息类型：gemetry_msgs::TwistWithConvarianceStamped
+- 描述：Twist通常是指机器人的运动变化，包括线速度和角速度
 
-- pc2_raw_pub
-  - 话题：/eagle_data/pc2_raw
-  - 消息类型：sensor_msgs::PointCloud2
-  - 描述：这是从传感器（如激光雷达或深度相机）获取的未经处理的点云数据。原始点云包含传感器采集到的所有点，可能包含噪声、离群点等。
+##### 6、pub_inlier_pc2
+
+- 话题：topic_inlier_pc2，即/eagle_data/inlier_pc2
+- 消息类型：sensor_msgs::PointCloud2
+- 描述：在点云配准或特征提取中，内点是指与模型或特征匹配的点。内点点云可能是经过某种滤波或配准后，与某个模型或参考帧相关的点云。
+
+##### 7、pub_outlier
+
+- 话题：topic_outlier_pc2, 即/eagle_data/outlier_pc2
+- 消息类型：sensor_msgs::PointCloud2
+- 描述：与内点相反，外点是指不符合模型或特征的点。外点点云通常包含未能与给定模型或参考帧匹配的点。
+
+##### 8、pc2_raw_pub
+
+- 话题：/eagle_data/pc2_raw
+- 消息类型：sensor_msgs::PointCloud2
+- 描述：这是从传感器（如激光雷达或深度相机）获取的未经处理的点云数据。原始点云包含传感器采集到的所有点，可能包含噪声、离群点等。
 
 #### 成员函数
 
-##### 1、virtual void onInit()
+##### 1、onInit()
 
--  描述： 初始化参数，设置订阅者、发布者
+-  描述
+   -  初始化参数，设置订阅者、发布者
 
-##### 2、void initializeTransformation()
 
-- 描述：初始化一些变换矩阵，主要涉及不同坐标系之间的转换
+##### 2、initializeTransformation()
+
+- 描述
+  - 初始化一些变换矩阵，主要涉及不同坐标系之间的转换
+
+- 参数：无
+- 返回值：无
 - 相关变量：
   - `livox_to_RGB`：Livox雷达坐标系到RGB坐标系的变换矩阵。
   - `RGB_to_livox`：RGB坐标系到Livox雷达坐标系的逆变换矩阵，即 `livox_to_RGB` 的逆矩阵。
@@ -696,27 +716,88 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
   - `Change_Radarframe`：雷达坐标系到Livox雷达坐标系的变换矩阵，通过交换坐标轴实现。
   - `Radar_to_livox`：将雷达坐标系转换到Livox雷达坐标系的组合变换矩阵，通过矩阵相乘得到。
 
-##### 3、void initializeParams()
+##### 3、initializeParams()
 
-- 描述：从ROS参数服务器获取并初始化一些参数，这些参数主要涉及点云处理中的降采样、离群点去除等操作的参数设置。
+- 描述
+  - 从ROS参数服务器获取并初始化一些参数，这些参数主要涉及点云处理中的降采样、离群点去除等操作的参数设置。
+
+- 参数：无
+- 返回值：无
+  - 将从ground truth获得的odom消息添加到队列`odom_msgs`队列中
+
 - 相关变量：
   - `voxelgrid`：用于进行体素网格降采样
   - `outlier_removal_filter`：离群点移除对象的指针
   - `odom_msgs`：std::deque\<nav_msgs::Odometry\>,`Odometry`消息的队列，这里存储的是`ground truth`文件中的`odom`消息
 
-### 2、apps/radar_graph_slam_nodelet.cpp
+##### 4、imu_callback()
+
+- 描述：
+- 参数：
+  - `imu_msg`：
+    - 类型：`sensor_msgs::ImuConstPtr&`
+    - 从IMU获取的数据
+- 返回值：无
+  - 将处理后的IMU数据以`sensor_msgs::Imu`消息的形式发布
+
+##### 5、cloud_callback()
+
+- 描述：
+  - 对从传感器获得的原始点云进行处理，根据一定条件(信号强度、位置等)筛选有效的点，构建新的点云数据。
+- 参数：
+  - `eagle_msg`，从传感器接收到的雷达消息
+- 返回值：无
+  - 发布经过处理后的点云`*filtered`
+- 相关变量：
+  - `radarpoint_raw`：原始点，包含x、y、z坐标，强度、多普勒速度
+  - `radarcloud_raw`：原始点云
+  - `radarpoint_xyzi`：原始点，包含x、y、z坐标，强度
+  - `radarcloud_xyzi`：原始点云
+  - `src_cloud`：点云指针，若启用了动态物体去除，指向雷达点云的内点，否则指向原始的雷达点云(`radarcloud_xyzi`)，最后会更新坐标系，称为baselinkFrame中的点云
+  - `transform`：从src_cloud坐标系到baselinkFrame的变换
+  - `filtered`：
+    - 变量类型：`pcl::PointCloud<PointT>::ConstPtr`
+    - 表示`src_cloud`进行距离过滤、下采样、离群点去除后的点云
+  - `num_at_dist`：当前帧的距离直方图
+
+##### 6、passthrough()
+
+##### 7、downsample()
+
+##### 8、downsample()
+
+##### 9、filtered()
+
+##### 10、outlier_removal()
+
+##### 11、distance_filter()
+
+##### 12、deskewing()
+
+- 描述
+  - 去除点云中的扭曲，以便更准确地估计运动或提取特征。
+- 输入
+  - PointCloud对象的指针
+- 输出：
+  - 返回一个指向常量 `PointCloud` 对象的指针，其中包含去扭曲后的点云。
+
+### 二、apps/radar_graph_slam_nodelet.cpp
 
 定义了一个类:RadarGraphSlamNodelet
 
 #### 成员函数：
 
-##### 1、参数初始化: virtual void onInit()
+##### 1、onInit()
 
-- 描述：初始化参数，设置订阅者、发布者
+- 描述：
+  - 初始化参数，设置订阅者、发布者
 
-##### 2、点云回调函数：cloud_callback()
 
-- 描述：将接受到的点云扔到关键帧队列中
+##### 2、cloud_callback()
+
+- 描述：
+  - 将接受到的点云扔到关键帧队列中
+
 - 参数：
   - `odom_msg`：里程计信息，即当前帧到基座之间的旋转、平移信息
   - `cloud_msg`：点云信息，即当前帧各个点的x、y、z坐标和强度等
@@ -726,7 +807,9 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 ##### 3、imu_callback()
 
-- 描述：根据IMU数据的四元数部分计算初始的机器人初始位姿矩阵`initial_pose`
+- 描述：
+
+  - 根据IMU数据的四元数部分计算初始的机器人初始位姿矩阵`initial_pose`
 
 - 参数：
 
@@ -747,12 +830,18 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 ##### 4、imu_odom_callback
 
-- 描述：接收imu和里程计融合的消息，并将其存储在imu_odom_queue队列中
-- 参数：`imu_odom_msg`,imu和里程计融合的消息
+- 描述
+  - 接收imu和里程计融合的消息，并将其存储在imu_odom_queue队列中
+
+- 参数
+  - `imu_odom_msg`：imu和里程计融合的消息
+
 
 ##### 5、preIntegrationTransform
 
-- 描述：计算关键帧队列第一个imu-odom消息和最后一个imu-odom消息之间的变换
+- 描述
+  - 计算关键帧队列第一个imu-odom消息和最后一个imu-odom消息之间的变换
+
 - 参数：无
 - 返回值：
   - `trans_`：
@@ -825,51 +914,67 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
   - 话题：/radar_graph_slam/odom_frame2frame
   - 消息类型：nav_msgs::Odometry
 
-### 3、apps/scan_matching_odometry_nodelet.cpp
+### 三、apps/scan_matching_odometry_nodelet.cpp
 
-##### 订阅者：
+#### 订阅者：
 
-- ego_vel_sub
-  - 话题：/eagle_data/twist
-  - 消息类型：geometry_msgs::TwistWithCovarianceStamped
-  - 回调函数：&ScanMatchingOdometryNodelet::pointcloud_callback
-- points_sub
-  - 话题：/filtered_points
-  - 消息类型：sensor_msgs::PointCloud2
-  - 回调函数：同上
+##### 1、ego_vel_sub
+
+- 话题：/eagle_data/twist
+- 消息类型：geometry_msgs::TwistWithCovarianceStamped
+- 回调函数：&ScanMatchingOdometryNodelet::pointcloud_callback
+
+##### 2、points_sub
+
+- 话题：/filtered_points
+- 消息类型：sensor_msgs::PointCloud2
+- 回调函数：同上
 
 <!--上述消息同步处理-->
 
-- imu_sub
-  - 话题：/imu
-  - 回调函数：&ScanMatchingOdometryNodelet::command_callback
-- command_sub
-  - 话题：/command
-  - 回调函数：&ScanMatchingOdometryNodelet::command_callback
+##### 3、imu_sub
 
-##### 发布者：
+- 话题：/imu
+- 回调函数：&ScanMatchingOdometryNodelet::command_callback
 
-- read_until_pub
-  - 话题：/scan_matching_odometry/read_until
-  - 消息类型：std_msgs::Header
-- odom_pub
-  - 雷达扫描匹配的里程计
-  - 话题：odomTopic，即/odom
-  - 消息类型：nav_msgs::Odometry
+##### 4、command_sub
 
-- trans_pub
-  - <!--雷达扫描匹配的转换？？？-->
-  - 话题：/scan_matching_odometry/transform
-  - 消息类型：geometry_msgs::TransformStamped
-- status_pub
-  - 话题：/scan_matching_odometry/status
-  - 消息类型：ScanMatchingStatus
-- aligned_points_pub
-  - 话题：/aligned_points
-  - 消息类型：sensor_msgs::PointCloud2
-- submap_pub
-  - 话题：/radar_graph_slam/submap
-  - 消息类型：sensor_msgs::PointCloud2
+- 话题：/command
+- 回调函数：&ScanMatchingOdometryNodelet::command_callback
+
+#### 发布者：
+
+##### 1、read_until_pub
+
+- 话题：/scan_matching_odometry/read_until
+- 消息类型：std_msgs::Header
+
+##### 2、odom_pub
+
+- 雷达扫描匹配的里程计
+- 话题：odomTopic，即/odom
+- 消息类型：nav_msgs::Odometry
+
+##### 3、trans_pub
+
+- <!--雷达扫描匹配的转换？？？-->
+- 话题：/scan_matching_odometry/transform
+- 消息类型：geometry_msgs::TransformStamped
+
+##### 4、status_pub
+
+- 话题：/scan_matching_odometry/status
+- 消息类型：ScanMatchingStatus
+
+##### 5、aligned_points_pub
+
+- 话题：/aligned_points
+- 消息类型：sensor_msgs::PointCloud2
+
+##### 6、submap_pub
+
+- 话题：/radar_graph_slam/submap
+- 消息类型：sensor_msgs::PointCloud2
 
 
 
