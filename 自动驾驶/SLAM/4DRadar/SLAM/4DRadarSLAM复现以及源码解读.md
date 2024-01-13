@@ -733,12 +733,26 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 ##### 4、imu_callback()
 
 - 描述：
+  - **IMU 数据处理**：
+    - 从 IMU（惯性测量单元）传感器获取的数据进行处理。
+    - 对原始的 IMU 数据进行一些变换，包括将欧拉角表示的姿态信息转换为四元数表示的姿态信息。
+  - **发布处理后的 IMU 数据**：
+    - 将处理后的 IMU 数据以 `sensor_msgs::Imu` 消息的形式发布，以供后续处理或显示使用。
+  - **更新队列**：
+    - 将 IMU 数据按照时间戳顺序存储到队列中。
+    - 通过对比时间戳，定期从队列中移除已经过时的 IMU 数据。
+  - **更新 TF（Transform）**：
+    - 如果启用了 TF 的发布（`publish_tf` 为真），则将当前的姿态信息发布为 TF 变换。
+  - **发布 Ground Truth（地面真值）数据**：
+    - 将 Ground Truth 数据（在这里是里程计信息）以 `nav_msgs::Odometry` 消息的形式发布。
+
 - 参数：
   - `imu_msg`：
     - 类型：`sensor_msgs::ImuConstPtr&`
     - 从IMU获取的数据
 - 返回值：无
   - 将处理后的IMU数据以`sensor_msgs::Imu`消息的形式发布
+  - 并且发布和IMU消息时间同步的`Ground Truth`信息
 
 ##### 5、cloud_callback()
 
@@ -749,37 +763,95 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 - 返回值：无
   - 发布经过处理后的点云`*filtered`
 - 相关变量：
-  - `radarpoint_raw`：原始点，包含x、y、z坐标，强度、多普勒速度
-  - `radarcloud_raw`：原始点云
-  - `radarpoint_xyzi`：原始点，包含x、y、z坐标，强度
-  - `radarcloud_xyzi`：原始点云
-  - `src_cloud`：点云指针，若启用了动态物体去除，指向雷达点云的内点，否则指向原始的雷达点云(`radarcloud_xyzi`)，最后会更新坐标系，称为baselinkFrame中的点云
-  - `transform`：从src_cloud坐标系到baselinkFrame的变换
-  - `filtered`：
+  - `radarpoint_raw`
+    - 原始点，包含x、y、z坐标，强度、多普勒速度
+  - `radarcloud_raw`
+    - 原始点云
+  - `radarpoint_xyzi`
+    - 原始点，包含x、y、z坐标，强度
+  - `radarcloud_xyzi`
+    - 原始点云
+  - `src_cloud`
+    - 点云指针，若启用了动态物体去除，指向雷达点云的内点，否则指向原始的雷达点云(`radarcloud_xyzi`)，最后会更新坐标系，称为baselinkFrame中的点云
+  - `transform`
+    - 从src_cloud坐标系到baselinkFrame的变换
+  - `filtered`
     - 变量类型：`pcl::PointCloud<PointT>::ConstPtr`
     - 表示`src_cloud`进行距离过滤、下采样、离群点去除后的点云
   - `num_at_dist`：当前帧的距离直方图
 
 ##### 6、passthrough()
 
+- 描述
+  - 点云的区域截取，输入点云中 z 坐标在 -2 和 10 之间的点截取出来，返回一个新的点云
+- 参数
+  - `cloud`
+    - 类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+    - 表示点云
+- 返回值
+  - `filtered`
+    - 类型：`pcl::PointCloud<PointT>::ConstPtr`
+    - 截取后的点云
+
 ##### 7、downsample()
 
-##### 8、downsample()
+- 描述
+  - 下采样函数，用于减少点云密度
+- 参数
+  - `cloud`
+    - 类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+    - 表示点云
+- 返回值
+  - `filtered`
+    - 类型：`pcl::PointCloud<PointT>::ConstPtr`
+    - 截取后的点云
 
-##### 9、filtered()
+##### 8、outlier_removal()
 
-##### 10、outlier_removal()
+- 描述
+  - 去除点云中的离群点
+- 参数：同上个函数
+- 返回值：同上个函数
 
-##### 11、distance_filter()
+##### 9、distance_filter()
 
-##### 12、deskewing()
+- 描述
+  - 去除点云中的离群点
+- 参数
+  - 同上个函数
+- 返回值
+  - 同上个函数
+
+##### 10、deskewing()
 
 - 描述
   - 去除点云中的扭曲，以便更准确地估计运动或提取特征。
-- 输入
-  - PointCloud对象的指针
-- 输出：
-  - 返回一个指向常量 `PointCloud` 对象的指针，其中包含去扭曲后的点云。
+- 参数
+  - 同上个函数
+- 返回值
+  - 同上个函数，代表去畸变后的点云
+
+##### 11、RadarRaw2PointCloudXYZ()
+
+- 描述
+  - 将`raw`点云转为`cloudxyzi`点云
+
+##### 12、RadarRaw2PointCloudXYZI
+
+- 描述
+  - 将`raw`点云转为`cloudxyz`点云
+
+##### 13、command_callback
+
+- 描述
+  - 回调函数，它处理来自 `std_msgs::String` 类型的命令消息。
+  - 收到`time`命令，返回时间的中值
+  - 收到`point_distribution`命令，返回平均点分布数据
+- 参数
+  - `str_msg`
+    - 变量类型：`const std_msgs::String&`
+- 返回值：无
+  - 输出时间容器的中值，或者平均点分布数据
 
 ### 二、apps/radar_graph_slam_nodelet.cpp
 
