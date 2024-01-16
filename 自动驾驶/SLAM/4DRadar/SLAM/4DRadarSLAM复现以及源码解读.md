@@ -937,54 +937,62 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 - 参数：无
 - 返回值：无
 
-##### ————————————————————————————————————————————————————————————
-
 ##### 创建slam需要用到的对象:
 
 - graph_slam, keyframe_updater, loop_detector，map_cloud_generator等等
 
 - 对应类的定义都在src/radar_graph_slam/文件夹下
 
-##### 订阅者
+#### 订阅者
 
-- odom_sub
-  - 话题：odomTopic, 即/odom
-  - 消息类型：nav_msgs::Odometry
+##### 1、odom_sub
 
-- cloud_sub
-  - 话题：/flitered_points
-  - 消息类型：sensor_msgs::PointCloud2
+- 话题：odomTopic, 即/odom
+- 消息类型：nav_msgs::Odometry
+
+##### 2、cloud_sub
+
+- 话题：/flitered_points
+- 消息类型：sensor_msgs::PointCloud2
 
 
-##### 发布者
+#### 发布者
 
-- markers_pub
-  - 话题：/radar_graph_slam/markers
-  - 消息类型：visualization_msgs::MarkerArray
+##### 1、markers_pub
 
-- odom2base_pub
-  - ==将雷达里程计转换为基线==
-  - 话题：/radar_graph_slam/odom2base
-  - 消息类型：geometry_msgs::TransformStamped
+- 话题：/radar_graph_slam/markers
+- 消息类型：visualization_msgs::MarkerArray
 
-- aftmapped_odom_pub
-  - 话题：/radar_graph_slam/aftmapped_odoml
-  - 消息类型：nav::Odometry
+##### 2、odom2base_pub
 
-- aftmapped_odom_incremenral_pub
-  - 话题：/radar_graph_slam/aftmapped_odoml_incremenral
-  - 消息类型：nav::Odometry
-- map_points_pub
-  - 话题：/radar_graph_slam/map_points
-  - 消息类型：sensor_msgs::PointCloud2
+- ==将雷达里程计转换为基线==
+- 话题：/radar_graph_slam/odom2base
+- 消息类型：geometry_msgs::TransformStamped
 
-- read_uintil_pub
-  - 话题：/radar_graph_slam/read_until
-  - 消息类型：std_msgs::Header
+##### 3、aftmapped_odom_pub
 
-- odom_frame2frame_pub
-  - 话题：/radar_graph_slam/odom_frame2frame
-  - 消息类型：nav_msgs::Odometry
+- 话题：/radar_graph_slam/aftmapped_odoml
+- 消息类型：nav::Odometry
+
+##### 4、aftmapped_odom_incremenral_pub
+
+- 话题：/radar_graph_slam/aftmapped_odoml_incremenral
+- 消息类型：nav::Odometry
+
+##### 5、map_points_pub
+
+- 话题：/radar_graph_slam/map_points
+- 消息类型：sensor_msgs::PointCloud2
+
+##### 6、read_uintil_pub
+
+- 话题：/radar_graph_slam/read_until
+- 消息类型：std_msgs::Header
+
+##### 7、odom_frame2frame_pub
+
+- 话题：/radar_graph_slam/odom_frame2frame
+- 消息类型：nav_msgs::Odometry
 
 ### 三、apps/scan_matching_odometry_nodelet.cpp
 
@@ -1047,6 +1055,76 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 - 话题：/radar_graph_slam/submap
 - 消息类型：sensor_msgs::PointCloud2
+
+#### 成员函数：
+
+##### 0、onInit()
+
+- 描述
+  - 初始化句柄、订阅者、发布者
+
+##### 1、initialize_params()
+
+- 描述
+  - 初始化参数
+
+##### 2、imu_callback()
+
+- 描述
+  - 处理传感器消息，计算去扰动后的IMU方向，提取欧拉角信息，将消息放入队列中，并在第一次处理时计算并输出初始IMU欧拉角。
+- 参数
+  - `imu_msg`
+    - 变量类型：`const sensor_msgs::ImuConstPtr&`
+    - 表示imu消息
+- 返回值：无
+- 相关参数
+  - `imu_queue`
+
+##### 3、flush_imu_queue()
+
+- 描述：
+  - 用于将IMU数据与关键帧（keyframes）关联，将时间戳相差不大的IMU数据和关键帧关联起来。
+- 参数：无
+- 返回值：
+  - 布尔值
+    - `true`：有新的IMU数据与关键帧关联
+    - `false`：没有新的IMU数据与关键帧关联
+
+
+##### 4、get_closest_imu()
+
+- 描述：
+  - 用于获取与给定时间戳最接近的IMU数据
+- 参数：
+  - `frame_stamp`：
+    - 时间戳
+    - 变量类型：`ros::Time`
+- 返回值
+  - 变量类型：`std::pair<bool, sensor_msgs::Imu>`
+    - `false_result`：未成功获取最近的IMU数据，`<false, NULL>`
+    - `result`：成功获取
+
+##### 5、transformUpdate()
+
+- 描述
+  - 将IMU（惯性测量单元）的姿态信息融合到激光雷达里程计（Odometry）的变换矩阵中，以实现更准确的姿态估计。
+- question
+  - 激光雷达的变换矩阵代表什么
+  - 
+
+##### 6、pointcloud_callback()
+
+##### 7、msf_pose_callback()
+
+##### 8、downsample()
+
+##### 9、matching()
+
+##### 10、publish_odometry()
+
+##### 11、publish_scan_matching_status()
+
+##### 12、conmand_callback()
 
 
 
