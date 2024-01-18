@@ -254,12 +254,30 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
 
 1. 将wireshark解析结果保存在json文件
 
-2. 安装相关的库
+2. 安装相关的库，apt安装或者源码安装选择一个
 
-   ```
-   sudo apt update
-   sudo apt install nlohmann-json3-dev
-   ```
+   - apt安装
+
+      ```
+      sudo apt update
+      sudo apt install nlohmann-json3-dev
+      ```
+
+
+   - 源码安装: https://blog.csdn.net/jiemashizhen/article/details/129275915
+
+     ```
+     // 在你喜欢的位置
+     git clone  https://github.com/nlohmann/json.git
+     cd json
+     mkdir build
+     cd build
+     cmake ..
+     make
+     sudo make install
+     ```
+
+     
 
 3. 读取json文件，并将内容解析到json对象中`nlohmann::json j`
 
