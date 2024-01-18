@@ -489,6 +489,8 @@ odom_msgs包含了机器人的位置、姿态、线速度、角速度等信息�
 
 `estimator.estimate(pc2_raw_msg, v_r, sigma_v_r, inlier_radar_msg, outlier_radar_msg)`使用RANSAC算法对点云数据进行==线性模型估计==，得到点云数据的自我速度以及内点和外点数据。内点和外点数据可以帮助我们更好地理解点云数据，以便于更好地估计模型的准确性和鲁棒性。
 
+##### 9、什么是扫描到地图的配准，它与扫描到扫描的配准有什么区别
+
 ## B、概念
 
 ##### 1、tf变化
@@ -1108,17 +1110,80 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 - 描述
   - 将IMU（惯性测量单元）的姿态信息融合到激光雷达里程计（Odometry）的变换矩阵中，以实现更准确的姿态估计。
-- question
-  - 激光雷达的变换矩阵代表什么
-  - 
+- 参数
+  - `odom_to_update`
+    - 变量类型：`Eigen::Matrix4d&`
+    - ==代表激光雷达扫描周期内的里程计（Odometry）变换矩阵==
+- 返回值：无
+- 相关变量
+  - `odom_to_update.block`：
+    - 激光雷达里程计的变换矩阵
+    - 描述了激光雷达在一个另一个坐标系中的位置和方向
+- question：
+  - 为什么IMU的姿态信息可以表示激光雷达里程计的变换矩阵
 
 ##### 6、pointcloud_callback()
 
+- 描述
+  - 处理传入的点云数据和相应的运动信息
+- 参数
+  - `twistMsg`
+    - 变量类型：`const geometry_msgs::TwistWithCovarianceStampedConstPtr&`
+    - 表示运动信息，包含角速度，线速度等
+  - `cloud_msg`
+    - 变量类型：`const sensor_msgs::PointCloud2ConstPtr&`
+    - 表示点云信息
+- 返回值：无
+
 ##### 7、msf_pose_callback()
+
+- 描述
+  - 回调函数，处理接收到的带协方差的姿态信息消息
+- 参数
+  - `pose_msg`
+    - 变量类型：`const geometry_msgs::PoseWithCovarianceStampedConstPtr&`
+    - 表示带协方差的姿态信息
+  - `after_update`
+    - 变量类型：`bool`
+    - 表示姿态是否更新过
 
 ##### 8、downsample()
 
+- 描述：
+  - 下采样一个点云
+- 参数
+  - `cloud`
+    - 变量类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+- 返回值
+  - `filtered`
+    - 变量类型：`pcl::PointCloud<Point>::ConstPtr`
+
 ##### 9、matching()
+
+- 描述
+  - 估计输入点云和关键帧点云之间的位姿
+- 参数
+  - `stamp`
+    - 变量类型：`const ros::Time&`
+  - `cloud`
+    - 变量类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+- 返回值
+  - 返回类型为 `Eigen::Matrix4d`，表示输入点云与关键帧点云之间的相对姿态变换矩阵。
+- 相关变量：
+  - 扫描配准部分
+    - `keyframe_cloud_s2s`：扫描到扫描的配准对象
+    - `keyframe_cloud_s2m`：扫描到地图的配准对象
+    - `guess`：
+      - 初始猜测变换矩阵
+      - 初始猜测的好坏直接影响了扫描匹配算法的收敛速度和结果的准确性。一个良好的初始猜测可以使算法更容易找到全局最优解，而不容易陷入局部最优解。
+    - `trans_s2s`：最终的扫描到扫描的变换矩阵
+    - `odom_s2s_now`： 
+      - 等于上一帧关键帧的位姿 * `tran_s2s`
+      - 当前时刻的扫描到扫描的位姿变换矩阵，即当前帧相对于起始点的变换矩阵
+    - `odom_s2m_now`：
+      - 当前时刻的地图到扫描的位姿变换矩阵
+  - 异常判断
+    - 
 
 ##### 10、publish_odometry()
 
