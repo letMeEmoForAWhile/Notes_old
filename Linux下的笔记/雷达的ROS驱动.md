@@ -112,25 +112,42 @@ Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh, std::string n
 
 # 二、根据ARS548-demo实现
 
-## 整体思路：
+## A、整体思路：
+
+两个项目：
+
+- RosDriver：
+  - 接受json格式的传感器数据，并用以ROS消息的格式发布
+- bagbag.py
+  - 订阅RosDriver的话题，并生成bag文件
+
+流程：
 
 1. 使用wireshark将pcap(pcapng)的解析结果保存为json文件
 
    注意需要ars548插件
 
-1. 直接从json文件读取解析结果，和字符流
+1. 使用RosDriver，直接从json文件读取解析结果，和字符流，并发布相关话题
 
-## 代码地址：
+1. 同时使用bagbag.py订阅话题，转为bag文件
+
+## B、RosDriver
+
+代码地址：
 
 https://github.com/wulang584513/ARS548-demo/tree/master
 
-## 运行环境：
+调整后的代码：
+
+https://github.com/letMeEmoForAWhile/RosDriverForARS548
+
+### 1、运行环境：
 
 ubuntu18.04 + ros melodic
 
-## 文件
+### 2、文件
 
-### ars548_process.launch
+#### ars548_process.launch
 
 启动四个节点
 
@@ -148,7 +165,7 @@ ubuntu18.04 + ros melodic
     2. 经过格式转换后，发布成rviz可以显示的两个话题：/ars548_process/object_marker，显示object话题；/ars548_process/detection_point_cloud，显示detection话题。
 - rviz
 
-### ars548_process/src/udp_interface.cpp
+#### ars548_process/src/udp_interface.cpp
 
 udp接口，从udp读取数据
 
@@ -191,7 +208,7 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
     - DetectionList
     - BasicStatus
 
-### ars548_process/src/data_process.cpp
+#### ars548_process/src/data_process.cpp
 
 ##### 作用
 
@@ -201,17 +218,17 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
 
 - processObjectListMessage(char *in, RadarObjectList *o_list):
 
-### ars548_process/src/data_struct.h
+#### ars548_process/src/data_struct.h
 
-## 数据读取流
+### 3、数据读取流
 
-### 1、从pcap文件读取数据
+#### 3.1、从pcap文件读取数据
 
 由于pcap保存的是原始字节流，无法读取重组后的字节流，因此放弃该思路。
 
-### 2、以json文件的形式保存wireshark的解析结果，并读取
+#### 3.2、以json文件的形式保存wireshark的解析结果，并读取
 
-#### 2.1 json文件的数据结构
+##### 3.2.1 json文件的数据结构
 
 ##### 对象(object)
 
@@ -250,7 +267,7 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
   [1, "apple", true, null, {"color": "red"}]
   ```
 
-#### 2.2 C++读取json文件
+##### 3.2.2 C++读取json文件
 
 1. 将wireshark解析结果保存在json文件
 
@@ -277,7 +294,6 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
      sudo make install
      ```
 
-     
 
 3. 读取json文件，并将内容解析到json对象中`nlohmann::json j`
 
@@ -286,5 +302,99 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
    - 在`nlohmann::json`库中，JSON对象、数组、字符串、数字、布尔值和null都是使用`nlohmann::json`类型来表示的。
    - 当你通过索引、键或其他方法访问`nlohmann::json`对象中的元素时，返回的仍然是`nlohmann::json`类型，不过其内部的实际数据可能是字符串、数字、布尔值、数组、对象或null。
 
+## C、bagbag.py
+
+如果直接使用 `rosbag record -a`记录数据，会使用当前时间作为时间戳。后续再重放数据时，使用的时间戳也为record时的时间，而不是消息头部中的stamp。
+
+在`bag.write()`的第三个参数中设置时间戳，不写默认为当前时间。
+
+```python
+#! /usr/bin/env python3
+import rospy
+import rosbag
+from std_msgs.msg import String
+from sensor_msgs.msg import Image
+def alcallback(msg):
+    global bag
+    if bag is None:
+        bag=rosbag.Bag("show.bag",'w')
+    print(msg.header.stamp)
+    bag.write('/show/color',msg,msg.header.stamp)   // bag.write的第三个参数为时间戳，不写默认为当前时间
+
+if __name__ == "__main__":
+    rospy.init_node('color_logger')
+    bag = None
+    sub=rospy.Subscriber('showcamera/color',Image,alcallback)
+    rospy.spin()
+    bag.close()
+```
 
 
+
+## D、具体步骤
+
+### 一、使用wireshark将传感器数据转换为json文件
+
+##### 1、使用wireshark打开抓取的pcapng文件
+
+雷达厂商提供了传感器的lua插件，可以直接过滤，只保留`detectionlist`数据
+
+![image-20240119161238901](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240119161238901.png)
+
+##### 2、导出解析结果为JSON格式	![屏幕截图 2024-01-19 16:16:54](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/屏幕截图 2024-01-19 16:16:54.png)
+
+![image-20240119162043049](../../../.config/Typora/typora-user-images/image-20240119162043049.png)
+
+### 二、RosDriver
+
+##### 1、编译
+
+1）下载项目：
+
+```
+git clone https://github.com/letMeEmoForAWhile/RosDriverForARS548.git
+```
+
+2）在ars548_msg和ars548_process下创建include文件夹
+
+- 不创建会报错：https://github.com/wulang584513/ARS548-demo/issues/3
+
+3）安装依赖
+
+安装nlohmann库
+
+- 见3.2.2 C++读取json文件部分
+
+4）终端切换到RosDriverForARS548根路径并编译
+
+```
+catkin_make
+```
+
+5）保存环境变量
+
+```
+vim ~/.bashrc
+```
+
+在最后一行如下内容。需要将`PATH_TO_RosDriverForARS548_FOLDER`改成RosDriverForARS548的路径
+
+```
+source PATH_TO_RosDriverForARS548_FOLDER/devel/setup.bash
+```
+
+```
+source ~/.bashrc
+```
+
+##### 2、运行
+
+1）在`ars548_process_node.cpp`中修改`json_file_path`为步骤一中的json文件路径
+
+2）启动节点
+
+```
+roslaunch ars548_process ars548_process.launch
+```
+
+### 三、bagag.py
