@@ -817,32 +817,46 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 - 返回值
   - `filtered`
     - 类型：`pcl::PointCloud<PointT>::ConstPtr`
-    - 截取后的点云
+    - 下采样后的点云
 
 ##### 8、outlier_removal()
 
 - 描述
   - 去除点云中的离群点
-- 参数：同上个函数
-- 返回值：同上个函数
+- 参数
+  - `cloud`
+    - 类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+    - 表示点云
+- 返回值
+  - `filtered`
+    - 类型：`pcl::PointCloud<PointT>::ConstPtr`
+    - 去除离群点后的点云
 
 ##### 9、distance_filter()
 
 - 描述
-  - 去除点云中的离群点
+  - 距离过滤，只保留与原点的距离在一定范围内的点
 - 参数
-  - 同上个函数
+  - `cloud`
+    - 类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+    - 表示点云
 - 返回值
-  - 同上个函数
+  - `filtered`
+    - 类型：`pcl::PointCloud<PointT>::ConstPtr`
+    - 距离过滤后的点云
 
 ##### 10、deskewing()
 
 - 描述
   - 去除点云中的扭曲，以便更准确地估计运动或提取特征。
 - 参数
-  - 同上个函数
+  - `cloud`
+    - 类型：`const pcl::PointCloud<PointT>::ConstPtr&`
+    - 表示点云
 - 返回值
-  - 同上个函数，代表去畸变后的点云
+  - `filtered`
+    - 类型：`pcl::PointCloud<PointT>::ConstPtr`
+    - 代表去畸变后的点云
 
 ##### 11、RadarRaw2PointCloudXYZ()
 
@@ -1204,11 +1218,11 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 
 
-### include/utility_radar.h
+##### 
 
-##### 参数服务器
+## D、launch文件
 
-### launch/radar_grapg_slam.launch
+### 1、radar_graph_slam.launch
 
 - 启动三个radar_graph_slam中的三个节点和rviz节点
 
@@ -1217,11 +1231,6 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
   - ```xml
     <include file="$(find radar_graph_slam)/launch/rosbag_play_radar_carpark1.launch" />
     ```
-
-
-## D、launch文件
-
-### 1、radar_graph_slam.launch
 
 ### 2、rosbag_play_radar_carpark1.launch
 
@@ -1239,3 +1248,9 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
   - `--duration=10000`: 设置播放时长为10000秒，表示播放的最长时间为10000秒。
   - `$(arg path)$(arg file_0)`: 拼接参数中指定的`path`和`file_0`，形成完整的rosbag文件路径。
   - `--topic /radar_enhanced_pcl /rgb_cam/image_raw/compressed /barometer/filtered /vectornav/imu`: 指定要发布的topic列表，包括`/radar_enhanced_pcl`、`/rgb_cam/image_raw/compressed`、`/barometer/filtered`和`/vectornav/imu`
+
+## E、配置文件
+
+### config/params.yaml
+
+##### 参数服务器
