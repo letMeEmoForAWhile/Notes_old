@@ -607,6 +607,17 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 ## C、节点文件
 
+![img](https://github.com/zhuge2333/4DRadarSLAM/raw/main/doc/fig_flowchart_system.png)
+
+- *preprocessing_nodelet*
+  - 下采样
+  - 将雷达点云传送到Livox雷达帧
+  - 评估自我速度并移除动态物体
+- *scan_matching_odometry_nodelet*
+  - 通过对相邻帧迭代的使用扫描匹配，评估传感器位姿，即里程计信息
+- *radar_graph_slam_nodelet*
+  - 使用闭环检测消除累积误差并且优化位姿图
+
 ### 1、apps/preprocessing_nodelet.cpp
 
 从`ground truth`文件中读取每一行，作为`odom_msgs`队列的元素，每个odom消息包含位置和方向数据
