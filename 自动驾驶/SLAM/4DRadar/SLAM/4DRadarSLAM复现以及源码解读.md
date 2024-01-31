@@ -2,7 +2,7 @@
 
 - PCL(依赖VTK)：`sudo apt install ros-melodic-pcl-ros  `
 
-- Eigen3: 忘了，没有通过
+- Eigen3: `sudo apt install ros-melodic-pcl-ros  `
 
 - OpenMP：（安装GCC即可）
 
