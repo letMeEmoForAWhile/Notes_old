@@ -1,8 +1,16 @@
-# 一、依赖包：
+# 一、依赖
 
-- PCL(依赖VTK)：`sudo apt install ros-melodic-pcl-ros  `
+## 1.1 Ubuntu和ROS
 
-- Eigen3: `sudo apt install ros-melodic-pcl-ros  `
+- Ubuntu 64位 18.04 或 20.04
+
+- ROS Melodic 或 Noetic
+
+## 1.2 第三方库
+
+- PCL(依赖VTK)： 
+
+- Eigen3：`fast_gicp`带的第三方库，不用专门安装
 
 - OpenMP：（安装GCC即可）
 
@@ -26,9 +34,68 @@
   
 
 
-## 安装VTK(忽略)
 
-1、在github上下载VTK库
+### 安装PCL
+
+##### 步骤：
+
+在官网下载pcl源码
+
+```
+mkdir build
+cd build
+cmake ..
+```
+
+#### 报错1：
+
+```
+-- The imported target "vtk" references the file
+   "/usr/bin/vtk"
+but this file does not exist.  Possible reasons include:
+
+* The file was deleted, renamed, or moved to another location.
+* An install or uninstall procedure did not complete successfully.
+* The installation package was faulty and contained
+  "/usr/lib/cmake/vtk-6.3/VTKTargets.cmake"
+  but not all the files it references.
+
+CMake Error at cmake/pcl_find_vtk.cmake:96 (message):
+  Missing vtk modules: vtkRenderingOpenGL2;vtkRenderingContextOpenGL2
+Call Stack (most recent call first):
+  CMakeLists.txt:392 (include)
+```
+
+##### 原因分析:
+
+find_vtk时，找到了ubuntu自带的vtk6.3，版本过低，缺少`vtkRenderingOpenGL2`和`vtkRenderingContextOpenGL2`
+
+##### 解决方法：
+
+- 卸载vtk6：
+
+  ```
+  sudo apt remove vtk6
+  ```
+
+- 安装vtk8.2.0
+
+  见后续教程
+
+##### 安装VTK8.2.0
+
+[ubuntu18.04安装VTK8.2.0](https://blog.csdn.net/weixin_44723106/article/details/103071712)
+
+1、VTK官网下载对应版本VTK源码
+
+https://vtk.org/download/
+
+2、安装依赖
+
+```bash
+sudo apt-get install cmake-curses-gui
+sudo apt-get install freeglut3-dev
+```
 
 2、编译安装
 
@@ -50,7 +117,7 @@ sudo make install
 
 3、验证
 
-# https://kitware.github.io/vtk-examples/site/Cxx/GeometricObjects/CylinderExample/
+https://kitware.github.io/vtk-examples/site/Cxx/GeometricObjects/CylinderExample/
 
 
 
@@ -65,48 +132,32 @@ export LD_LIBRARY_PATH=/path_to_VTK/lib:$LD_LIBRARY_PATH
 source ~/.bashrc
 ```
 
+#### 直接使用apt一键安装pcl(忽略这一部分)
 
-
-## 安装PCL(忽略)
-
-```
-mkdir build
-cd build
-cmake ..
-```
-
-仍然报错没有VTK
-
-```
--- The imported target "vtk" references the file
-   "/usr/bin/vtk"
-but this file does not exist.  Possible reasons include:
-
-* The file was deleted, renamed, or moved to another location.
-* An install or uninstall procedure did not complete successfully.
-* The installation package was faulty and contained
-  "/usr/lib/cmake/vtk-6.3/VTKTargets.cmake"
-  but not all the files it references.
-
-CMake Error at cmake/pcl_find_vtk.cmake:96 (message):
-  Missing vtk modules: vtkRenderingOpenGL2;vtkRenderingContextOpenGL2
-Call Stack (most recent call first):
-  CMakeLists.txt:392 (include)
-```
-
-在/usr/bin/目录下能找到vtk6，将其复制一份，重命名为vtk
-
-```
-sudo cp ./vtk6 ./vtk
-```
-
-中间的错误消失，但仍显示Missing vtk modules
-
-直接使用apt一键安装
+安装成功，但后续编译SLAM项目时仍会出错
 
 ```
 sudo apt install libpcl-dev
 ```
+
+## 1.3 ROS包
+
+- apt安装：
+
+  - geodesy
+
+  - nmea_msgs
+
+  - pcl_ros
+
+  `sudo apt-get install ros-XXX-geodesy ros-XXX-pcl-ros ros-XXX-nmea-msgs ros-XXX-libg2o`
+
+  根据ROS版本，将`XXX`替换为`melodic`或者`noetic`
+
+- ROS项目源码安装：
+  - [fast_apdgicp](https://github.com/zhuge2333/fast_apdgicp)或者[fast_gicp](https://github.com/SMRT-AIST/fast_gicp)
+  - [ndt_omp](https://github.com/koide3/ndt_omp)
+  - [barometer_bmp3888](https://github.com/zhuge2333/barometer_bmp388)
 
 # 二、编译
 
@@ -322,7 +373,7 @@ error: ‘make_unique’ is not a member of ‘std’
 
 是因为 **std**::**make _ unique**在C++14以后新加入的函数；
 
-##### 解决方法：
+##### 解决方法1：
 
 修改`catkin_workspace\src\4DRadarSlam\CMakeLists.txt`
 
@@ -331,6 +382,14 @@ error: ‘make_unique’ is not a member of ‘std’
 ```cmake
 set(CMAKE_CXX_STANDARD 14)  # 使用 C++14 标准
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+##### 解决方法2：
+
+在执行`catkin_make`时，指定使用`C++14`标准
+
+```cmd
+catkin_make -DCMAKE_CXX_STANDARD=14
 ```
 
 ## 错误7：'std'没有'mutex'成员
