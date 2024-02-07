@@ -10,6 +10,8 @@
 
 - PCL(依赖VTK)： 
 
+  - PCL版本：1.9.1
+
 - Eigen3：`fast_gicp`带的第三方库，不用专门安装
 
 - OpenMP：（安装GCC即可）
@@ -31,11 +33,17 @@
   cmake --build .
   sudo make install
   ```
-  
+
 
 
 
 ### 安装PCL
+
+相关教程
+
+https://blog.csdn.net/qq_42257666/article/details/124574029 
+
+
 
 ##### 步骤：
 
@@ -136,7 +144,7 @@ source ~/.bashrc
 
 安装成功，但后续编译SLAM项目时仍会出错
 
-```
+```bash
 sudo apt install libpcl-dev
 ```
 
@@ -150,7 +158,9 @@ sudo apt install libpcl-dev
 
   - pcl_ros
 
-  `sudo apt-get install ros-XXX-geodesy ros-XXX-pcl-ros ros-XXX-nmea-msgs ros-XXX-libg2o`
+  ```bash
+  sudo apt-get install ros-XXX-geodesy ros-XXX-pcl-ros ros-XXX-nmea-msgs ros-XXX-libg2o
+  ```
 
   根据ROS版本，将`XXX`替换为`melodic`或者`noetic`
 
@@ -388,7 +398,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 在执行`catkin_make`时，指定使用`C++14`标准
 
-```cmd
+```bash
 catkin_make -DCMAKE_CXX_STANDARD=14
 ```
 
@@ -406,7 +416,7 @@ catkin_make -DCMAKE_CXX_STANDARD=14
 
 在提示错误的文件中添加头文件
 
-```
+```c++
 #include <mutex>  
 ```
 
@@ -420,11 +430,9 @@ catkin_make -DCMAKE_CXX_STANDARD=14
 
 修改rosbag_play_radar_carpark1.launch文件中的路径
 
-### 
-
 在工作空间根目录下运行
 
-```
+```bash
 roslaunch radar_graph_slam radar_graph_slam.launch
 ```
 
@@ -449,13 +457,13 @@ https://blog.csdn.net/qq_44164791/article/details/130351276
 
 1. 打开环境变量文件
 
-   ```
+   ```bash
    sudo  vim ~/.bashrc
    ```
 
 2. 在文件最后加入语句
 
-   ```
+   ```bash
    source ~/catkin_ws/devel/setup.bash
    export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:~/catkin_ws/
    ```
@@ -464,7 +472,7 @@ https://blog.csdn.net/qq_44164791/article/details/130351276
 
 3. 保存并退出后，执行以下命令
 
-   ```
+   ```bash
    source ~/.bashrc
    ```
 
