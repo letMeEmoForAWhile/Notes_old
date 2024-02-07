@@ -153,17 +153,19 @@
 
 ## 1.1 安装
 
+##### 官方安装方法：
+
 官方文档：http://wiki.ros.org/ROS/Installation
 
 1. 添加ros可用源
 
-   ```
+   ```bash
    sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
    ```
 
 2. 设置密钥
 
-   ```
+   ```bash
    sudo apt install curl # if you haven't already installed curl
    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
    ```
@@ -172,25 +174,25 @@
 
    - 更新Debian安装包的源
 
-     ```
+     ```bash
      sudo apt update
      ```
 
    - 安装Desktop-Full版本
 
-     ```
+     ```bash
      sudo apt install ros-melodic-desktop-full
      ```
 
    - 查找可用的包
 
-     ```
+     ```bash
      apt search ros-melodic
      ```
 
 4. 环境设置
 
-   ```
+   ```bash
    echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
    source ~/.bashrc
    ```
@@ -231,6 +233,16 @@
    ```
    rosrun turtlesim turtle_teleop_
    ```
+
+##### 香鱼ros一键安装
+
+```bash
+wget http://fishros.com/install -O fishros && bash fishros
+```
+
+根据提示选择相应的数字。
+
+
 
 ## 1.2 VScode集成开发环境搭建
 
@@ -981,5 +993,5 @@ rosrun my_rosbag_recorder my_rosbag_recorder
 - 私有节点句柄
 - 
 
-
+# 九、catkin_make
 
