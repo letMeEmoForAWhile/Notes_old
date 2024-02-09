@@ -157,6 +157,10 @@
 
 官方文档：http://wiki.ros.org/ROS/Installation
 
+其他教程：https://blog.csdn.net/sea_grey_whale/article/details/132023522
+
+Autolabor：http://www.autolabor.com.cn/book/ROSTutorials/chapter1/12-roskai-fa-gong-ju-an-zhuang/124-an-zhuang-ros.html
+
 1. 添加ros可用源
 
    ```bash
@@ -180,58 +184,67 @@
 
    - 安装Desktop-Full版本
 
+     XXX为`melodic`或者`noetic`
+
      ```bash
-     sudo apt install ros-melodic-desktop-full
+     sudo apt install ros-XXX-desktop-full
      ```
 
    - 查找可用的包
 
+     XXX为`melodic`或者`noetic`
+
      ```bash
-     apt search ros-melodic
+     apt search ros-XXX
      ```
 
 4. 环境设置
 
+   XXX为`melodic`或`noetic`
+
    ```bash
-   echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
+   echo "source /opt/ros/XXX/setup.bash" >> ~/.bashrc
    source ~/.bashrc
    ```
 
 5. 安装必要的包，以便于创建和管理自己的ROS工作空间
 
-   ```
-   sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+   - `noetic`版本为`python3`
+   - `melodic`版本为`python`
+
+   ```bash
+   sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
    ```
 
 6. 安装并初始化rosdep，能够让你轻易安装编译一些源所需要的系统依赖。运行ROS一些核心组件也需要rosdep。
 
-   ```
-   sudo apt install python-rosdep
+   ```bash
+   sudo apt install python3-rosdep
    ```
 
    初始化
 
-   ```
-   sudo rosdep init //不能挂梯子
+   ```bash
+   sudo rosdep init //可能会出错，看autolabor版的教程
    rosdep update	//需要挂梯子
    ```
 
 7. 测试
 
-   ```
+   ```bash
    roscore
    ```
 
    打开第二个终端，运行完后出现静止海龟
 
-   ```
+   ```bash
    rosrun turtlesim turtlesim_node
    ```
 
    打开第三个终端，启动turtlesim的键盘控制节点，
 
-   ```
-   rosrun turtlesim turtle_teleop_
+   ```bash
+   rosrun turtlesim turtle_teleop_key
    ```
 
 ##### 香鱼ros一键安装
