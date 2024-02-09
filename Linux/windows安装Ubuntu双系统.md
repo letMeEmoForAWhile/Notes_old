@@ -95,6 +95,19 @@ sudo apt install xserver-xorg-input-synaptics
 
 失败，且出现登陆成功后无法使用鼠标和键盘的问题。
 
+## 4、浏览器无法播放视频
+描述：
+浏览器无法在相关网页播放视频，如b站等网页
+
+解决方法：
+安装相应插件
+```
+sudo apt install flashplugin-installer
+sudo apt install browser-plugin-freshplayer-pepperflash
+```
+
+重启浏览器
+
 # 删除Ubuntu系统
 
 [【Linux卸载】Win10卸载Ubuntu双系统（不安装任何软件）_怎么卸载ubuntu系统_百里飞洋的博客-CSDN博客](https://blog.csdn.net/qq_51513895/article/details/128614127)
