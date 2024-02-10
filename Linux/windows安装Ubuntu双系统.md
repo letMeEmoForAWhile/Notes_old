@@ -96,17 +96,34 @@ sudo apt install xserver-xorg-input-synaptics
 失败，且出现登陆成功后无法使用鼠标和键盘的问题。
 
 ## 4、浏览器无法播放视频
-描述：
+##### 描述：
+
 浏览器无法在相关网页播放视频，如b站等网页
 
-解决方法：
+##### 解决方法1（失败）：
+
 安装相应插件
+
 ```
 sudo apt install flashplugin-installer
 sudo apt install browser-plugin-freshplayer-pepperflash
 ```
 
 重启浏览器
+
+##### 解决方法2：
+
+在显卡配置文件中修改：https://zhuanlan.zhihu.com/p/348624522?utm_id=0
+
+
+
+## 5、无法修改亮度
+
+https://www.cnblogs.com/zl-yang/p/13073356.html
+
+
+
+https://blog.csdn.net/afgqwjgfjqwgfg/article/details/121084950
 
 # 删除Ubuntu系统
 
