@@ -12,7 +12,7 @@
 
   - PCL版本：1.9.1
 
-- Eigen3：`fast_gicp`带的第三方库，不用专门安装
+- Eigen3：
 
 - OpenMP：（安装GCC即可）
 
