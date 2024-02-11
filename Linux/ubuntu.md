@@ -134,6 +134,14 @@ https://blog.csdn.net/afgqwjgfjqwgfg/article/details/121084950
 
 https://blog.csdn.net/qq_37416258/article/details/111186832
 
+```
+uname -r
+```
+
+发现内核版本为5.15.0
+
+教程中升级到5.9，这里选择升级到5.19
+
 ## 删除Ubuntu系统
 
 [【Linux卸载】Win10卸载Ubuntu双系统（不安装任何软件）_怎么卸载ubuntu系统_百里飞洋的博客-CSDN博客](https://blog.csdn.net/qq_51513895/article/details/128614127)
