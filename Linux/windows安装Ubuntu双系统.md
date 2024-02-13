@@ -48,6 +48,17 @@ ubuntu20.04：
 适用于ubuntu20.04和ubuntu22.04
 
 [Ubuntu20.04 无线网卡驱动（未发现wifi适配器）、Nvidia显卡驱动安装一条龙教程【多坑预警】_ubuntuwifi驱动安装-CSDN博客](https://blog.csdn.net/weixin_52490336/article/details/133139105)
+直接使用链接中的项目地址，可能会编译出错
+在github中搜到了intel官方驱动地址`https://github.com/intel/backport-iwlwifi.git`
+
+将
+```
+git clone https://git.kernel.org/pub/scm/linux/kernel/git/iwlwifi/backport-iwlwifi.git
+```
+替换成
+```
+git clone https://github.com/intel/backport-iwlwifi.git
+```
 
 - 首先明确网卡是intel还是realtek，在windows中查看设备管理器可知本机网卡为 intel AX211
 
@@ -103,7 +114,7 @@ sudo apt install xserver-xorg-input-synaptics
 
 浏览器无法在相关网页播放视频，如b站等网页
 
-##### 解决方法1（失败）：
+##### 解决方法：
 
 安装相应插件
 
@@ -114,30 +125,22 @@ sudo apt install browser-plugin-freshplayer-pepperflash
 
 重启浏览器
 
-##### 解决方法2：
-
-在显卡配置文件中修改：https://zhuanlan.zhihu.com/p/348624522?utm_id=0
 
 
 
 ### 5、无法修改亮度
+
+##### 解决方法：
+
+在显卡配置文件中添加对应内：https://zhuanlan.zhihu.com/p/348624522?utm_id=0
+
 
 https://www.cnblogs.com/zl-yang/p/13073356.html
 
 
 
 https://blog.csdn.net/afgqwjgfjqwgfg/article/details/121084950
-直接使用链接中的项目地址，可能会编译出错
-在github中搜到了intel官方驱动地址`https://github.com/intel/backport-iwlwifi.git`
 
-将
-```
-git clone https://git.kernel.org/pub/scm/linux/kernel/git/iwlwifi/backport-iwlwifi.git
-```
-替换成
-```
-git clone https://github.com/intel/backport-iwlwifi.git
-```
 
 升级内核(暂未实现)
 
