@@ -127,8 +127,17 @@ https://www.cnblogs.com/zl-yang/p/13073356.html
 
 
 https://blog.csdn.net/afgqwjgfjqwgfg/article/details/121084950
+直接使用链接中的项目地址，可能会编译出错
+在github中搜到了intel官方驱动地址`https://github.com/intel/backport-iwlwifi.git`
 
-
+将
+```
+git clone https://git.kernel.org/pub/scm/linux/kernel/git/iwlwifi/backport-iwlwifi.git
+```
+替换成
+```
+git clone https://github.com/intel/backport-iwlwifi.git
+```
 
 升级内核(暂未实现)
 
