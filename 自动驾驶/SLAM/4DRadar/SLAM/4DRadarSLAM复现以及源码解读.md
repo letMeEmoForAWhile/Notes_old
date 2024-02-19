@@ -8,15 +8,13 @@
 
 ## 1.2 第三方库
 
-- PCL(依赖VTK)： 
+- PCL：`sudo apt install ros-XXX-pcl-ros`
 
-  - PCL版本：1.9.1
-
-- Eigen3：
+- Eigen3：不需要安装
 
 - OpenMP：（安装GCC即可）
 
-- g2o：图优化,`sudo apt install ros-melodic-libg2o`
+- g2o：图优化,`sudo apt install ros-XXX-libg2o`。(`XXX`为`noetic`或`melodic`)
 
 - ndt_omp :在src中，`git clone https://github.com/koide3/ndt_omp.git`
 
@@ -26,7 +24,7 @@
    git clone -b 4.0.3 https://github.com/borglab/gtsam.git
   ```
 
-  ```
+  ```bash
   cd gtsam
   mkdir build && cd build
   cmake ..
@@ -37,7 +35,7 @@
 
 
 
-### 安装PCL
+### 安装PCL(不需要安装，有ROS版的即可)
 
 相关教程
 
@@ -131,7 +129,7 @@ https://kitware.github.io/vtk-examples/site/Cxx/GeometricObjects/CylinderExample
 
 4、配置路径
 
-```
+```bash
 vim ~/.bashrc
 
 //在文件中添加,/path_to_VTK是VTK库的路径
@@ -140,7 +138,7 @@ export LD_LIBRARY_PATH=/path_to_VTK/lib:$LD_LIBRARY_PATH
 source ~/.bashrc
 ```
 
-#### 直接使用apt一键安装pcl(忽略这一部分)
+#### 另一种方法：直接使用apt一键安装
 
 安装成功，但后续编译SLAM项目时仍会出错
 
@@ -477,6 +475,8 @@ https://blog.csdn.net/qq_44164791/article/details/130351276
    ```
 
 ## 重新运行，成功
+
+
 
 发现闭环检测失败，可能是没有启动某些模块。
 
@@ -1321,3 +1321,9 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 ### config/params.yaml
 
 ##### 参数服务器
+
+#  五、运行自己的数据
+
+需要修改的文件:
+
+- 
