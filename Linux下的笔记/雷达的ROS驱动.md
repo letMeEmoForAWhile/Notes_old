@@ -118,7 +118,7 @@ Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh, std::string n
 
 - RosDriverForARS548：
   - 接受json格式的传感器数据，并用以ROS消息的格式发布
-- bagbag.py
+- rosbag_recorder
   - 订阅RosDriverForARS548的话题，并生成bag文件
 
 ##### 流程：
@@ -129,7 +129,7 @@ Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh, std::string n
 
 1. 使用RosDriverForARS548，直接从json文件读取解析结果，和字符流，并发布相关话题
 
-1. 同时使用bagbag.py订阅话题，转为bag文件
+1. 同时使用rosbag_recorder订阅话题，转为bag文件
 
 ##### 运行环境：
 
