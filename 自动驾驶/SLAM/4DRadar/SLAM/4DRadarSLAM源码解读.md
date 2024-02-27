@@ -7,7 +7,7 @@
 radar_graph_slam文件中
 
 ```xml
- <include file="$(find radar_graph_slam)/launch/rosbag_play_radar_carpark1.launch" />
+<include file="$(find radar_graph_slam)/launch/rosbag_play_radar_carpark1.launch" />
 ```
 
 包名应该是4DRadarSLAM，但这里显示radar_graph_slam
@@ -16,13 +16,31 @@ radar_graph_slam文件中
 
 ##### 2、在预处理节点的cloud_callback函数中为什么需要两种类型的点云：radarpoint_raw和radarpoint_xyzi
 
-- `radarpoint_raw`包含了xyz和强度信息以及多普勒速度，所有点最终被添加到`radarcloud_raw`中
+- `radarpoint_raw`包含了xyz和强度信息以及多普勒速度
+  1. 所有点最终被添加到`radarcloud_raw`中
 
-- `radarpoint_xyzi`包含了xyz和强度信息，所有点最终被添加到`cloud_xyzi`中
+  2. `radarcloud_raw`被转换为ROS中的PointCloud2格式的数据：`pc2_raw_msg`
 
+  3. `pc2_raw_msg`消息被发布
 
+  4. `pc2_raw_msg`作为自我速度评估器`estimator.estimate()`的输入，返回得到**内点**和**外点**的点云数据：`inlier_radar_msg`，`outlier_radar_msg`
+
+  5. `inlier_radar_msg`被转换`radarcloud_inlier`，即从ROS消息转换为pcl点云类型。
+
+  6. 若启用**动态物体去除**，`src_cloud`(即后续处理的点云)指向`radarcloud_inlier`
+
+  7. 后续对`src_cloud`进行一系列处理，得到过滤后的点云`filtered`
+
+- `radarpoint_xyzi`包含了xyz和强度信息
+  1. 所有点最终被添加到`radarcloud_xyzi`中
+
+  2. 若未启用**动态物体去除**，`src_cloud`指向`radarcloud_xyzi`
+
+  3. 后续对`src_cloud`进行一系列处理，得到过滤后的点云`filtered`
 
 ##### 3、eagle->msg的消息格式是什么
+
+见“二、运行自己的数据，问题1”
 
 ##### 4、odom_msgs的数据格式是什么，为什么要使用队列
 
@@ -801,7 +819,9 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 
 
-##### 
+
+
+
 
 ## D、launch文件
 
@@ -842,7 +862,87 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 ## A、问题
 
-##### 1、在预处理节点中，cloud_callback函数
+##### 1、在预处理节点中，cloud_callback函数的参数eagel_msg包含哪些信息，与自己采集的ars548传感器数据有什么不同
+
+查看bag文件的具体内容，需要将其转换为txt文件，参考如下链接：https://blog.csdn.net/jppdss/article/details/130029063
+
+- 查看作者提供的bag文件
+
+  1. 在bag文件的路径下，使用`rosbga info`查看bag文件相关信息
+
+     ```bash
+     rosbag info cp_2022-02-26.bag
+     ```
+
+     可知，原话题为：`/radar_enhanced_pcl`。PS：在`params.yaml`文件中也可知该信息。
+
+  2. 保存该话题为txt文件
+
+     ```bash
+     rostopic echo -b cp_2022-02-26.bag -p /radar_enhanced_pcl > cp_2022-02-26-radar_enhanced_pcl.txt
+     ```
+
+     ctrl+c提前结束转换，避免文件过大，导致无法打开
+
+  3. 查看txt文件
+
+     ![image-20240227144636257](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240227144636257.png)
+
+     ![image-20240227144854629](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240227144854629.png)
+
+     通过txt的第一行可知，该话题包含了
+
+     - 时间：`%time`
+     - 序列号：`field.header.seq`
+     - 时间戳：`field.header.stamp`
+     - 坐标系：`field.header.frame_id`
+     - 6556个点：`filed.points[0-6555].x`,`filed.points[0-6555].y`,`filed.points[0-6555].z`
+     - 四个通道
+       - 通道名称：`field.channels[0-4].name`
+       - 通道中每个点的值：`field.channels[0-4].values[0-6555]`
+       - 由`cloud_callback`可知，`channels[0].value[i]`表示点`i`的多普勒速度，`channels[2].value[i]`表示点`i`的信号强度。
+
+- 查看自己数据的消息内容
+
+  1. 在bag文件的路径下，使用`rosbga info`查看bag文件相关信息
+
+     ```bash
+     rosbag info RiQingBanShiNeiDiSu3.bag
+     ```
+
+     得到点云话题为：`/ars548_process/detection_point_cloud`
+
+  2. 保存该话题为txt文件
+
+     ```bash
+     rostopic echo -b RiQingBanShiNeiDiSu3.bag -p /ars548_process/detection_point_cloud > RiQingBanShiNeiDiSu3.txt
+     ```
+
+  3. 查看txt文件
+
+     ![image-20240227153954708](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/image-20240227153954708.png)
+
+     可知，该话题包含了
+
+     - 时间：`%time`
+     - 序列号：`field.header.seq`
+     - 时间戳：`field.header.stamp`
+     - 坐标系：`field.header.frame_id`
+     - 37个点：`filed.points[0-36].x`,`filed.points[0-36].y`,`filed.points[0-36].z`
+
+- eagle_msg和自己采集的ars548数据区别如下：
+
+  1. 点的数量差距很大。
+
+     eagle_msg数据一帧拥有6556个点，而ars548数据一帧只有36个点。
+
+     当前解决思路：点云融合。
+
+  2. ars548未收集到多普勒速度和信号强度信息。
+
+     当前解决思路：重新从原始的ars548传感器数据流中处理相关信息。
+
+
 
 ## B、需要修改的文件:
 
