@@ -47,7 +47,7 @@
 
 
 
-# 一、根据一个毫米波雷达ROS driver实现，同4DRaSLAM
+# 一、根据一个毫米波雷达ROS driver实现，同4DRaSLAM(未实现，弃用)
 
 ## 目前进展：
 
@@ -114,36 +114,63 @@ Convert::Convert(ros::NodeHandle node, ros::NodeHandle private_nh, std::string n
 
 ## A、整体思路：
 
-两个项目：
+##### 两个项目：
 
-- RosDriver：
+- RosDriverForARS548：
   - 接受json格式的传感器数据，并用以ROS消息的格式发布
 - bagbag.py
-  - 订阅RosDriver的话题，并生成bag文件
+  - 订阅RosDriverForARS548的话题，并生成bag文件
 
-流程：
+##### 流程：
 
 1. 使用wireshark将pcap(pcapng)的解析结果保存为json文件
 
    注意需要ars548插件
 
-1. 使用RosDriver，直接从json文件读取解析结果，和字符流，并发布相关话题
+1. 使用RosDriverForARS548，直接从json文件读取解析结果，和字符流，并发布相关话题
 
 1. 同时使用bagbag.py订阅话题，转为bag文件
 
-## B、RosDriver
+##### 运行环境：
 
-代码地址：
+- Ubuntu18.04 
+
+  - ROS melodic
+
+  - nlohmann-json库
+
+    具体见 3.2.2 部分
+
+  - wireshark
+
+    1. 安装wireshark
+
+       ```bash
+       sudo apt install wireshark
+       ```
+
+       出现弹窗，选择“是”，允许Wireshark捕获网络数据包。
+
+    2. 配置wireshark插件，使其能够解析ars548传感器数据。
+
+       
+
+       
+
+- Ubuntu20.04(推荐)
+  - ROS noetic
+  - nlohmann-json库
+  - wireshark
+
+## B、RosDriverForARS548
+
+##### 代码地址：
 
 https://github.com/wulang584513/ARS548-demo/tree/master
 
-调整后的代码：
+##### 调整后的代码：
 
 https://github.com/letMeEmoForAWhile/RosDriverForARS548
-
-### 1、运行环境：
-
-ubuntu18.04 + ros melodic
 
 ### 2、文件
 
@@ -165,7 +192,7 @@ ubuntu18.04 + ros melodic
     2. 经过格式转换后，发布成rviz可以显示的两个话题：/ars548_process/object_marker，显示object话题；/ars548_process/detection_point_cloud，显示detection话题。
 - rviz
 
-#### ars548_process/src/udp_interface.cpp
+#### ars548_process/src/udp_interface.cpp(忽略该部分)
 
 udp接口，从udp读取数据
 
@@ -220,7 +247,9 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
 
 #### ars548_process/src/data_struct.h
 
-### 3、数据读取流
+### 3、如何数据读取流
+
+##### 动机：原始的ars548
 
 #### 3.1、从pcap文件读取数据
 
@@ -302,34 +331,54 @@ UDP（用户数据报协议）是一个简单的面向消息的传输层协议�
    - 在`nlohmann::json`库中，JSON对象、数组、字符串、数字、布尔值和null都是使用`nlohmann::json`类型来表示的。
    - 当你通过索引、键或其他方法访问`nlohmann::json`对象中的元素时，返回的仍然是`nlohmann::json`类型，不过其内部的实际数据可能是字符串、数字、布尔值、数组、对象或null。
 
-## C、bagbag.py
+## C、rosbag_recorder
+
+##### 动机：为什么不直接使用`rosbag record -a`
 
 如果直接使用 `rosbag record -a`记录数据，会使用当前时间作为时间戳。后续再重放数据时，使用的时间戳也为record时的时间，而不是消息头部中的stamp。
 
-在`bag.write()`的第三个参数中设置时间戳，不写默认为当前时间。
+##### 代码地址：
+
+
+
+##### 具体代码：
+
+在`bag.write()`的第三个参数中设置时间戳，不写则默认当前时间。
 
 ```python
-#! /usr/bin/env python3
-import rospy
-import rosbag
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
-def alcallback(msg):
-    global bag
-    if bag is None:
-        bag=rosbag.Bag("show.bag",'w')
-    print(msg.header.stamp)
-    bag.write('/show/color',msg,msg.header.stamp)   // bag.write的第三个参数为时间戳，不写默认为当前时间
+#include "ros/ros.h"
+#include "sensor_msgs/PointCloud.h"
+#include "rosbag/bag.h"
+#include "rosbag/view.h"
 
-if __name__ == "__main__":
-    rospy.init_node('color_logger')
-    bag = None
-    sub=rospy.Subscriber('showcamera/color',Image,alcallback)
-    rospy.spin()
-    bag.close()
+rosbag::Bag bag; // 声明一个rosbag
+
+void alCallback(const sensor_msgs::PointCloud::ConstPtr& msg) {
+    // 在这里处理接收到的PointCloud消息
+    // 可以通过msg来访问消息的数据
+
+    if (bag.isOpen()) {
+        bag.write("/ars548_process/detection_point_cloud", msg->header.stamp, *msg);
+    }
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "my_subscriber");
+    ros::NodeHandle nh;
+
+    // 打开Bag文件以写入
+    bag.open("/home/dearmoon/datasets/4DRadar/ours/bag/syd.bag", rosbag::bagmode::Write);
+
+    ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud>("/ars548_process/detection_point_cloud", 10, alCallback);
+
+    ros::spin(); // 进入ROS主循环，等待消息
+
+    bag.close(); // 关闭Bag文件
+
+    return 0;
+}
+
 ```
-
-
 
 ## D、具体步骤
 
@@ -343,15 +392,13 @@ if __name__ == "__main__":
 
 ##### 2、导出解析结果为JSON格式	![屏幕截图 2024-01-19 16:16:54](https://raw.githubusercontent.com/letMeEmoForAWhile/typoraImage/main/img/屏幕截图 2024-01-19 16:16:54.png)
 
-![image-20240119162043049](../../../.config/Typora/typora-user-images/image-20240119162043049.png)
-
-### 二、RosDriver
+### 二、RosDriverForARS548
 
 ##### 1、编译
 
 1）下载项目：
 
-```
+```bash
 git clone https://github.com/letMeEmoForAWhile/RosDriverForARS548.git
 ```
 
@@ -367,23 +414,23 @@ git clone https://github.com/letMeEmoForAWhile/RosDriverForARS548.git
 
 4）终端切换到RosDriverForARS548根路径并编译
 
-```
+```bash
 catkin_make
 ```
 
 5）保存环境变量
 
-```
+```bash
 vim ~/.bashrc
 ```
 
 在最后一行如下内容。需要将`PATH_TO_RosDriverForARS548_FOLDER`改成RosDriverForARS548的路径
 
-```
+```bash
 source PATH_TO_RosDriverForARS548_FOLDER/devel/setup.bash
 ```
 
-```
+```bash
 source ~/.bashrc
 ```
 
@@ -393,8 +440,7 @@ source ~/.bashrc
 
 2）启动节点
 
-```
+```bash
 roslaunch ars548_process ars548_process.launch
 ```
 
-### 三、bagag.py
