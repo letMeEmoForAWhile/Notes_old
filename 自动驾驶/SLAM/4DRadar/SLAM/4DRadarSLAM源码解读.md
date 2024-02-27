@@ -12,17 +12,15 @@ radar_graph_slam文件中
 
 包名应该是4DRadarSLAM，但这里显示radar_graph_slam
 
-答：
+答：查看`package.xml`文件，该文件定义了包名为`radar_graph_slam`
 
-##### 2、为什么需要两种类型的点云，radarpoint_raw和radarpoint_xyzi
+##### 2、在预处理节点的cloud_callback函数中为什么需要两种类型的点云：radarpoint_raw和radarpoint_xyzi
 
-radarpoint_raw包含了xyz和强度信息以及多普勒速度，
+- `radarpoint_raw`包含了xyz和强度信息以及多普勒速度，所有点最终被添加到`radarcloud_raw`中
 
-radarpoint_xyzi包含了xyz和强度信息，
+- `radarpoint_xyzi`包含了xyz和强度信息，所有点最终被添加到`cloud_xyzi`中
 
-能不能只使用radarpoint_raw
 
-答：
 
 ##### 3、eagle->msg的消息格式是什么
 
@@ -842,56 +840,70 @@ c++模板库，提供了许多用于**向量**、**矩阵**、**数组**操作�
 
 #  二、运行自己的数据
 
-需要修改的文件:
+## A、问题
 
-- launch文件：
+##### 1、在预处理节点中，cloud_callback函数
 
-  - 添加新的launch文件：
+## B、需要修改的文件:
+
+##### 1、launch文件
+
+- 添加新的launch文件：
+
+  ```xml
+  <!-- rosbag_play_radar_NWU.launch -->
+  
+  <!-- This launch file loads rosbags and makes an octomap file -->
+  
+  <launch>
+  
+  <!-- <param name="/use_sim_time" value="true"/> -->
+  
+  <!-- paths to the rosbag files -->
+  <arg name="path" default="/home/dearmoon/datasets/NWU/"/>
+  
+  <arg name = "file_0" default = "RiQingBuDianBoGaoSu4.bag"/>
+  <arg name = "file_1" default = "carpark_400/carpark1_2023-02-01.bag"/>
+  <arg name = "file_2" default = "carpark_400/carpark8_normal_2023-01-14.bag"/>
+  <arg name = "file_3" default = "carpark_400/carpark0_normal_2023-01-14.bag"/>
+  <arg name = "file_4" default = "carpark_400/carpark0_hard_2023-01-14.bag"/>
+  <arg name = "file_5" default = "carpark_400/carpark0_2023-01-27.bag"/>
+  <arg name = "file_6" default = "carpark_400/carpark8_2023-01-27.bag"/>
+  
+  <!-- Plays the dataset. WARNING: changing 'rate' will cause interactions with the demo.  -->
+  <!--  /radar_pcl /radar_trk -->
+  <node pkg="rosbag" type="play" name="player"
+      args = "-s 0.5 --clock --rate=3 --duration=10000
+      $(arg path)$(arg file_0)
+      --topic /ars548_process/detection_point_cloud
+      ">
+  </node>
+  
+  </launch>
+  ```
+
+- radar_graph_slam.launch
+
+  - 添加
 
     ```xml
-    <!-- rosbag_play_radar_NWU.launch -->
-    
-    <!-- This launch file loads rosbags and makes an octomap file -->
-    
-    <launch>
-    
-    <!-- <param name="/use_sim_time" value="true"/> -->
-    
-    <!-- paths to the rosbag files -->
-    <arg name="path" default="/home/dearmoon/datasets/NWU/"/>
-    
-    <arg name = "file_0" default = "RiQingBuDianBoGaoSu4.bag"/>
-    <arg name = "file_1" default = "carpark_400/carpark1_2023-02-01.bag"/>
-    <arg name = "file_2" default = "carpark_400/carpark8_normal_2023-01-14.bag"/>
-    <arg name = "file_3" default = "carpark_400/carpark0_normal_2023-01-14.bag"/>
-    <arg name = "file_4" default = "carpark_400/carpark0_hard_2023-01-14.bag"/>
-    <arg name = "file_5" default = "carpark_400/carpark0_2023-01-27.bag"/>
-    <arg name = "file_6" default = "carpark_400/carpark8_2023-01-27.bag"/>
-    
-    <!-- Plays the dataset. WARNING: changing 'rate' will cause interactions with the demo.  -->
-    <!--  /radar_pcl /radar_trk -->
-    <node pkg="rosbag" type="play" name="player"
-        args = "-s 0.5 --clock --rate=3 --duration=10000
-        $(arg path)$(arg file_0)
-        --topic /ars548_process/detection_point_cloud
-        ">
-    </node>
-    
-    </launch>
+    <include file="$(find radar_graph_slam)/launch/rosbag_play_radar_NWU.launch" />
     ```
 
-  - 在radar_graph_slam.launch文件中添加
+  - 注释如下行
 
     ```xml
-     <include file="$(find radar_graph_slam)/launch/rosbag_play_radar_NWU.launch" />um'
+    <include file="$(find radar_graph_slam)/launch/rosbag_play_radar_carpark1.launch" />
     ```
 
-- params.yam文件
+##### 2、params.yaml文件
 
-  - Topics部分
+该文件代表参数服务器
 
-    - ```yaml
-      pointCloudTopicL=: "/ars548_process/detection_point_cloud"
-      ```
+- Topics部分
 
-      
+  - ```yaml
+    pointCloudTopicL=: "/ars548_process/detection_point_cloud"
+    ```
+
+    
